@@ -24,7 +24,7 @@ int main()
     }
     in.close();
 
-    MM::NN network(inputs.size(), 10, 10);
+    MM::NN network(inputs, 10, 10);
 
     return 0;
 }
@@ -50,7 +50,8 @@ namespace MM
         {
             wi.push_back((rand() % 20 - 10) / 10.0);
         }
-        
+        bias1 = 0.2;
+        bias2 = 0.2;
     }
 
     double NN::relu(double d)
@@ -66,11 +67,44 @@ namespace MM
     {
         //Multiply the input layer with the weights between the input and h1 layers
         std::vector<double> inputwi = mmultiply(input, wi);
-        //Fill the hidden layer with the products of the matrix multiplication put through the ReLU-function
+        //Run the outputs of the matrix multiplication through the ReLU function to get the hidden states
         for(int i = 0;i<h1.size();i++)
         {
-            h1[i] = relu(inputh1[i]);
+            h1[i] = relu(inputwi[i]);
         }
+        //Run the outputs of the matrix multiplication through the ReLU function to get the final outputs
+        std::vector<double> h1w = mmultiply(h1, w1);
+        for(int i = 0;i<h1w.size();i++)
+        {
+            out[i] = relu(h1w[i]);
+        }
+    }
+
+    std::vector<double> NN::toOneHot(int v)
+    {
+        std::vector<double> vv;
+        for(int i = 0;i<10;i++)
+        {
+            if(i == v)
+            {
+                vv.push_back(1);
+            }
+            else
+            {
+                vv.push_back(0);
+            }
+        }
+        return vv;
+    }
+
+    void NN::bprop(const std::vector<double> targetoutput)
+    {
+        
+    }
+
+    void NN::train()
+    {
+
     }
 
     std::vector<double> NN::mmultiply(std::vector<double> left, std::vector<double> right)
