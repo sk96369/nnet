@@ -7,9 +7,10 @@
 #include <math.h>
 #include <assert.h>
 #include <list>
-#include <zlib.h>
+#include "zlib.h"
 #include <errno.h>
 #include <stdio.h>
+#include <tuple>
 
 /* The following macro calls a zlib routine and checks the return
    value. If the return value ("status") is not OK, it prints an error
@@ -62,8 +63,10 @@ void softmax(std::vector<double> &in, std::size_t size)
 
 namespace MM
 {
-    NN::NN(std::vector<double> inputs, int h1size, int outsize)
+    NN::NN(std::vector<double> inputs, int h1size, int outsize) : modelNr(count)
     {
+        count++;
+         
         srand(0);
         for(std::vector<double>::iterator ptr = inputs.begin();ptr != inputs.end();ptr++)
         {
@@ -89,7 +92,7 @@ namespace MM
 
     bool NN::saveModel()
     {
-        
+        return 1;
     }
 
     double NN::relu(double d) const
@@ -197,12 +200,12 @@ namespace MM
         }
     }
 
-    void NN::train(std::list<std::vector<double>> trainingdata)
+    void NN::train(const std::list<std::tuple<std::vector<double>, std::vector<double>>> &trainingdata)
     {
-        for(std::list<std::vector<double>>::iterator ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
+        for(std::list<std::tuple<std::vector<double>, std::vector<double>>>::const_iterator ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
         {
-            fprop(*ptr);
-            bprop()
+            fprop(std::get<0>(*ptr));
+            bprop(std::get<1>(*ptr));
         }
     }
 
@@ -233,6 +236,7 @@ namespace MM
                 weights[i*10+j] = left[i] * right[j];
             }
         }
+        return weights;
     }
 
     double NN::bsum(const std::vector<double> &v) const

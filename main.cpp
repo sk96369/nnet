@@ -1,7 +1,8 @@
-#include <zlib.h>
+#include "zlib.h"
 #include "multiplym.h"
 #include <fstream>
 #include <iostream>
+#include <string>
 
 
 //Main.cpp
@@ -22,7 +23,11 @@ int main(int argc, char* argv[])
             std::cout << "Unable to open \"model.txt\"";
             exit(1);
         }
-        while
+        std::string line;
+        while(parameters >> line)
+        {
+            std::cout << line << std::endl;
+        }
     }
 
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <list>
 
 //multiplym.h
 namespace MM
@@ -58,7 +59,7 @@ namespace MM
         
         NN(std::vector<double> inputs, int h1size, int outsize);
         //Training function
-        void train(std::list<std::vector<double>> trainingdata);
+        void train(const std::list<std::tuple<std::vector<double>, std::vector<double>>> &trainingdata);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
         bool saveModel();
 
