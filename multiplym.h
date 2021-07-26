@@ -7,16 +7,12 @@ namespace MM
 {
     class NN
     {
-        // Counter for how many models have been trained. Used for setting modelNr
-        static unsigned int count;
-        // An integer that identifies which model this object is
-        const unsigned int modelNr;
         // Input
-        std::vector<double> input;
+        std::vector<int> input;
         // Hidden layers
         std::vector<double> h1;
         // Output
-        std::vector<double> out;
+        std::vector<int> out;
         //Biases for the first hidden layer and the output layer respectively
         std::vector<double> bias1;
         std::vector<double> bias2;
@@ -48,20 +44,26 @@ namespace MM
         double bsum(const std::vector<double> &v) const;
 
         //One Hot -encoding function. Gives a corresponding one-hot -vector for a given integer 0-9
-        std::vector<double> toOneHot(int v);
+        std::vector<int> toOneHot(int v);
 
         //ReLU-activation function. Returns 0 if d<0, returns the value of d otherwise.
         double relu(double d) const;
         //Function for calculating the derivates of relu for a vector
         std::vector<double> drelu(const std::vector<double> &vec) const;
 
+	//Function for setting inputs. Returns false if the input vector is of wrong size,
+	//true otherwise.
+	bool setInput(const std::vector<int> &in);
+
         public:
         
         NN(std::vector<double> inputs, int h1size, int outsize);
-        //Training function
-        void train(const std::list<std::tuple<std::vector<double>, std::vector<double>>> &trainingdata);
+        //Training function, the first member of the tuple is an image, the second is the label
+        void train(const std::list<std::tuple<std::vector<int>, std::vector<int>>> &trainingdata);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
         bool saveModel();
 
+	//Function that makes a prediction based on the given inputs
+	int predict(const std::vector<int> &in);
     };
 }

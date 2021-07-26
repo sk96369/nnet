@@ -63,14 +63,14 @@ void softmax(std::vector<double> &in, std::size_t size)
 
 namespace MM
 {
-    NN::NN(std::vector<double> inputs, int h1size, int outsize) : modelNr(count)
+    NN::NN(int h1size, int outsize) : modelNr(count)
     {
         count++;
          
         srand(0);
-        for(std::vector<double>::iterator ptr = inputs.begin();ptr != inputs.end();ptr++)
+        for(int i = 0;i<28*28;i++)
         {
-            input.push_back(*ptr);
+            input.push_back(0);
         }
         for(int i = 0;i<h1size;i++)
         {
@@ -115,7 +115,26 @@ namespace MM
         return d;
     }
 
-    void NN::fprop(const std::vector<double> &in)
+    void NN::fprop(const std::vector<int> &in)
+    {
+        //Multiply the input layer with the weights between the input and h1 layers
+        std::vector<double> inputwi = lmultiply(in, wi);
+        //Run the outputs of the matrix multiplication through the ReLU function to get the hidden states
+        for(int i = 0;i<h1.size();i++)
+        {
+            h1[i] = relu(inputwi[i]);
+        }
+        //Run the outputs of the matrix multiplication through the ReLU function to get the final outputs
+        std::vector<double> h1w = lmultiply(h1, w1);
+        for(int i = 0;i<h1w.size();i++)
+        {
+            out[i] = relu(h1w[i]);
+        }
+        //Run the output layer through the softmax function
+        softmax(out, out.size());
+    }
+
+    void NN::fprop()
     {
         //Multiply the input layer with the weights between the input and h1 layers
         std::vector<double> inputwi = lmultiply(input, wi);
@@ -200,14 +219,32 @@ namespace MM
         }
     }
 
-    void NN::train(const std::list<std::tuple<std::vector<double>, std::vector<double>>> &trainingdata)
+	void NN::train(const std::list<std::tuple<std::vector<int>, std::vector<int>>> &trainingdata)
+	{
+		for(auto ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
+        	{
+        		fprop(std::get<0>(*ptr));
+            		bprop(std::get<1>(*ptr));
+	        }
+	}
+
+    std::vector<double> NN::lmultiply(const std::vector<int> &left, const std::vector<double> &right) const
     {
-        for(std::list<std::tuple<std::vector<double>, std::vector<double>>>::const_iterator ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
+        int lsize = left.size();
+        int rsize = right.size();
+        //osize is the number of "columns" in the weight matrix, sort of
+        int osize = rsize/lsize;
+        std::vector<double> output(osize);
+        for(int i = 0;i < lsize;i++)
         {
-            fprop(std::get<0>(*ptr));
-            bprop(std::get<1>(*ptr));
+            for(int j = 0;j < osize;j++)
+            {
+                output[j] += (double)left[i] * right[i*osize + j];
+            }
         }
+        return output;
     }
+
 
     std::vector<double> NN::lmultiply(const std::vector<double> &left, const std::vector<double> &right) const
     {
@@ -248,4 +285,53 @@ namespace MM
         }
         return d;
     }
+	
+    bool NN::setInput(const std::vector<int> &in)
+    {
+	    if(in.size() == 28*28)
+	    {
+		    for(int i = 0;i < 28*28;i++)
+		    {
+			    input[i] = in[i];
+		    }
+	    }
+    }
+
+    bool NN::saveModel(std::string filename)
+    {
+	    filename.append(".txt");
+	std::ofstream file;
+	file.open(filename);
+	for(auto ptr = bias1.begin();ptr != bias1.end();ptr++)
+	{
+		file << *ptr << " ";
+	}
+	file << std::endl;
+
+	for(auto ptr = bias2.begin();ptr != bias2.end();ptr++)
+	{
+		file << *ptr << " ";
+	}
+	file << std::endl;
+
+	for(auto ptr = biaswi.begin();ptr != wi.end();ptr++)
+	{
+		file << *ptr << " ";
+	}
+	file << std::endl;
+
+	for(auto ptr = w1.begin();ptr != w1.end();ptr++)
+	{
+		file << *ptr << " ";
+	}
+	file << std::endl;
+    }
+
+    int NN::predict(const std::vector<int> &in)
+    {
+	    input = in;
+	    fprop();
+    }
+
+
 }

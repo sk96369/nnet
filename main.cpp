@@ -3,18 +3,15 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-
+#include "gzreader.cpp"
 
 //Main.cpp
 int main(int argc, char* argv[])
 {
-    std::ifstream parameters;
+    std::ofstream parameters;
     const char * trainingdata_filename = "traininglabels.gz";
-    const char * params = "model.txt";
-    struct gzFile_s *file;
-    std::size_t wIdx = 0;
-    FILE *param;
-
+    const char * trainingdata2_filename = "imagedata.gz";
+	std::list<std::tuple<std::vector<int>, std::vector<int>>> trainingdata;
     if(argv[1] == "loadparams")
     {
         parameters.open(params);
@@ -30,35 +27,15 @@ int main(int argc, char* argv[])
         }
     }
 
-
-    if(argc != 2)
+    if(argv[1] == "trainmodel")
     {
-        std::cout << " Usage : read_gzip [in gz File]" << std::endl;
-        exit(1);
-    }
-    file = gzopen(argv[1], "rb");
-    if(!file)
-    {
-        std::cout << " Failed to open gz file : " << argv[1] << std::endl;
-        exit(1);
-    }
-    if(gzbuffer(file, 8192))
-    {
-        std::cout << " Failed to buffer the file " << argv[1] << std::endl;
-        exit(1);
+	trainingdata = toTrainingData(trainingdata_filename, trainingdata2_filename);
     }
 
-    
+    MM::NN network(10, 10);
+	network.train(trainingdata);
 
-    std::vector<double> inputs;
-    double input;
-    while(parameters >> input)
-    {
-        inputs.push_back(input);
-    }
-    parameters.close();
-
-    MM::NN network(inputs, 10, 10);
+	parameters.open("model.txt");
 
     return 0;
 }
