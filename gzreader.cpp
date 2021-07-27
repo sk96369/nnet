@@ -9,15 +9,15 @@
 
 using namespace std;
 
-vector<int> gzToint(int argc, char** argv)
+
+//Function for reading the MNIST training data, and returning it in a vector
+vector<int> readmnistgz(string filename, string extension = ".gz")
 {
 	std::vector<int> inint;
-	if(argc < 2)
-	{
-		cerr << "Usage: " << argv[0] << " <gzipped input file>" << endl;
-	}
-	//Read from the first command line argument, assume it's gzipped
-	ifstream file(argv[1], ios_base::in | ios_base::binary);
+	filename.append(extension);
+
+	//Read from the file with the name given as the first parameter
+	ifstream file(filename, ios_base::in | ios_base::binary);
 	boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
     	inbuf.push(boost::iostreams::gzip_decompressor());
     	inbuf.push(file);
@@ -27,17 +27,92 @@ vector<int> gzToint(int argc, char** argv)
 	stringstream ss;
     	int nextint;
 	char nextchar;
+
+	//Get the first 64 bits of data from the stream
+	char intsizechar[4];
+
+	cout << "Magic number: " ;
+	for(size_t i = 0;i<sizeof(int);i++)
+	{
+		instream.get(nextchar);
+		intsizechar[i] = nextchar;
+	}
+	nextint = (int)(((unsigned char)intsizechar[0]) << 24)
+			| (int)(((unsigned char)intsizechar[1]) << 16)
+			| (int)(((unsigned char)intsizechar[2]) << 8)
+			| (int)(((unsigned char)intsizechar[3]));
+	
+	std::cout << nextint << std::endl;
+
+	//If nextint == 2049, the data being read is the labels
+	if(nextint == 2049)
+	{
+		cout << "Number of items: " ;
+		for(size_t i = 0;i<sizeof(int);i++)
+		{
+			instream.get(nextchar);
+			intsizechar[i] = nextchar;
+		}
+		nextint = (int)(((unsigned char)intsizechar[0]) << 24)
+				| (int)(((unsigned char)intsizechar[1]) << 16)
+				| (int)(((unsigned char)intsizechar[2]) << 8)
+				| (int)(((unsigned char)intsizechar[3]));
+		
+		std::cout << nextint << std::endl;
+	}
+	//Assume we are processing the training images data
+	else
+	{
+		cout << "Number of images: " ;
+		for(size_t i = 0;i<sizeof(int);i++)
+		{
+			instream.get(nextchar);
+			intsizechar[i] = nextchar;
+		}
+		nextint = (int)(((unsigned char)intsizechar[0]) << 24)
+				| (int)(((unsigned char)intsizechar[1]) << 16)
+				| (int)(((unsigned char)intsizechar[2]) << 8)
+				| (int)(((unsigned char)intsizechar[3]));
+		
+		std::cout << nextint << std::endl;
+
+		cout << "Number of rows: " ;
+		for(size_t i = 0;i<sizeof(int);i++)
+		{
+			instream.get(nextchar);
+			intsizechar[i] = nextchar;
+		}
+		nextint = (int)(((unsigned char)intsizechar[0]) << 24)
+				| (int)(((unsigned char)intsizechar[1]) << 16)
+				| (int)(((unsigned char)intsizechar[2]) << 8)
+				| (int)(((unsigned char)intsizechar[3]));
+		
+		std::cout << nextint << std::endl;
+
+		cout << "Number of columns: " ;
+		for(size_t i = 0;i<sizeof(int);i++)
+		{
+			instream.get(nextchar);
+			intsizechar[i] = nextchar;
+		}
+		nextint = (unsigned int)(((unsigned char)intsizechar[0]) << 24)
+				| (int)(((unsigned char)intsizechar[1]) << 16)
+				| (int)(((unsigned char)intsizechar[2]) << 8)
+				| (int)(((unsigned char)intsizechar[3]));
+		
+		std::cout << nextint << std::endl;
+	}
 	while(instream.get(nextchar))
 	{
 		nextint = (int)nextchar;
 		inint.push_back(nextint);
 	}
-
     	//Cleanup
     	file.close();
 	return inint;
-}
 
+}	
+	
 
 
 //OWN CODE
@@ -81,3 +156,21 @@ int main()
 	
 	return 0;
 }*/
+
+//Main function for testing
+int main()
+{
+	vector<int> labels = readmnistgz("traininglabels");
+	vector<int> images = readmnistgz("imagedata");
+	for(int i = 0;i < labels.size();i++)
+	{
+		printf("\nCorrect label: %i", labels[i]);
+		for(int j = 0;j < 784;j++)
+		{
+			if(j % 28 == 0)
+				printf("\n");
+			printf("%i", images[i*784+j] != 0);
+					}
+	}
+	printf("\n");
+}
