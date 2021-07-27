@@ -2,3 +2,6 @@ a.exe
 traininglabels.gz
 a.out
 imagedata.gz
+gzreader_test.cpp
+gzreader2.cpp
+example.txt.gz

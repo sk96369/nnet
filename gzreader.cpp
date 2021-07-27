@@ -1,107 +1,83 @@
-#include <iostream>
+//CODE FROM THE INTERNET
 #include <fstream>
-#include <string>
-#include <zlib.h>
-#include <cstring>
-#include <stringstream>
-#include <list>
+#include <iostream>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <sstream>
+#include <vector>
 
+using namespace std;
 
-std::list<std::tuple<std::vector<int>, std::vector<int>>> toTrainingData(std::string labelfilename, std::string imagefilename)
+vector<int> gzToint(int argc, char** argv)
 {
-	//See: zlib.h
+	std::vector<int> inint;
+	if(argc < 2)
+	{
+		cerr << "Usage: " << argv[0] << " <gzipped input file>" << endl;
+	}
+	//Read from the first command line argument, assume it's gzipped
+	ifstream file(argv[1], ios_base::in | ios_base::binary);
+	boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
+    	inbuf.push(boost::iostreams::gzip_decompressor());
+    	inbuf.push(file);
+    	//Convert streambuf to istream
+    	istream instream(&inbuf);
+    	//Copy everything from instream to 
+	stringstream ss;
+    	int nextint;
+	char nextchar;
+	while(instream.get(nextchar))
+	{
+		nextint = (int)nextchar;
+		inint.push_back(nextint);
+	}
+
+    	//Cleanup
+    	file.close();
+	return inint;
+}
+
+
+
+//OWN CODE
+/*#include "gzreader.cpp"
+#include <iostream>
+#include <zlib.h>
+#include <fstream>
+#include <sstream>
+
+int main()
+{
+	//Uncomment this to test for real
+	//toTrainingData("traininglabels.gz", "imagedata.gz");
+	
 	std::size_t wIdx = 0;
 	struct gzFile_s *gzFile;
-
-	// IF THERE ARE PROBLEMS RUNNING IN WINDOWS, CHECK "zconf.h", search "ZEXTERN"
-	gzFile = gzopen(labelfilename, "rb");
+	gzFile = gzopen("traininglabels.gz", "rb");
 	if(gzFile)
 	{
 		if(gzbuffer(gzFile, 8192))
 		{
-			std::cout << "SOMETHING WENT WRONG." << std::endl;
-			exit(1);
+			std::cout << "SOMETHING WENT WRONG.\n";
 		}
 	}
 
-	int mn;
-	int labelcount;
-	unsigned char *data_p = new unsigned char[8192];
-	memset(data_p, '\0', sizeof());
+	unsigned char* data_p = new unsigned char[8192];
+	memset(data_p, '\0', sizeof(*data_p));
 
-	wIdx = gzread(gzFile, voidp(data_p), 8192);
-	std::vector<int> labels;
-	std::stringstream ss;
 
-	mn = data_p[0];
-	labelcount = data_p[4];
-	unsigned char label;
-
-	for(int i = 8;i < data_p.size();i++)
+	while(wIdx = gzread(gzFile, voidp(data_p), 8192))
 	{
-		labels.push_back(static_cast<int>(data_p[i]));
-	}
-
-	while(!gzeof(gzFile))
-	{
-		wIdx = gzread(gzFile, voidp(data_p), 8192);
+		std::cout << wIdx << std::endl;
+		std::stringstream ss;
 		ss << data_p;
-		while(data_p >> label)
-		{
-			labels.push_back(label);
-		}
-	}
-	gzclose(gzFile);	
+		std::cout << ss.str() << std::endl;
 
-	//Do the same procedure for the image file
-	gzFile = gzopen(imagefilename, "rb");
-	if(gzFile)
-	{
-		if(gzbuffer(gzFile, 8192))
-		{
-			std::cout << "SOMETHING WENT WRONG." << std::endl;
-			exit(1);
-		}
 	}
 
-		
-	wIdx = gzread(gzFile, voidp(data_p), 8192);
-	std::vector<int> pixels;
-	std::vector<int> images;
-
-	mn = data_p[0];
-	int numberofimages = data_p[4];
-	int numberofrows = data_p[8];
-	int numberofcolumns = data_p[12];
-	char pixel;
-
-	for(int i = 16;i < data_p.size();i++)
-	{
-		pixels.push_back(static_cast<int>(data_p[i]));
-	}
-
-	while(!gzeof(gzFile))
-	{
-		wIdx = gzread(gzFile, voidp(data_p), 8192);
-		ss << data_p;
-		while(data_p >> pixel)
-		{
-			pixels.push_back(static_cast<int>(pixel));
-		}
-	}
 	gzclose(gzFile);
 
-	//Make the appropriate containers for the training data
-	std::list<std::tuple<std::vector<int>, std::vector<int>>> out;
-	for(int i = 0;i < 60000;i++)
-	{
-		std::vector<int> image;
-		for(int j = 0;j < 784;j++)
-		{
-			image.push_back(pixels[i*784+j]);
-		}
-		out.push_back(make_tuple(image, labels[i]));
-	}
-
-	return out;
-}
+	
+	return 0;
+}*/
