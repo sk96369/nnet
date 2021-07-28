@@ -5,3 +5,9 @@ imagedata.gz
 gzreader_test.cpp
 gzreader2.cpp
 example.txt.gz
+output.txt
+softmax_test.cpp
+test.out
+model.txt
+asdasd.txt
+labelsout.txt

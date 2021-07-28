@@ -11,62 +11,34 @@
 #include <errno.h>
 #include <stdio.h>
 #include <tuple>
-
-/* The following macro calls a zlib routine and checks the return
-   value. If the return value ("status") is not OK, it prints an error
-   message and exits the program. Zlib's error statuses are all less
-   than zero. */
-
-#define CALL_ZLIB(x) {                                                  \
-        int status;                                                     \
-        status = x;                                                     \
-        if (status < 0) {                                               \
-            fprintf (stderr,                                            \
-                     "%s:%d: %s returned a bad status of %d.\n",        \
-                     __FILE__, __LINE__, #x, status);                   \
-            exit (EXIT_FAILURE);                                        \
-        }                                                               \
-    }
-
-/* if "test" is true, print an error message and halt execution. */
-
-#define FAIL(test,message) {                             \
-        if (test) {                                      \
-            inflateEnd (& strm);                         \
-            fprintf (stderr, "%s:%d: " message           \
-                     " file '%s' failed: %s\n",          \
-                     __FILE__, __LINE__, file_name,      \
-                     strerror (errno));                  \
-            exit (EXIT_FAILURE);                         \
-        }                                                \
-    }
-
-#define windowBits 15
-#define ENABLE_ZLIB_GZIP 32
-#define CHUNK 0x4000
+#include "onehot.cpp"
+#include <float.h>
 
 //multiplym.cpp
-
-void softmax(std::vector<double> &in, std::size_t size)
-{
-    assert(0 <= size <= sizeof(in) / sizeof(double));
-    int sum = 0;
-    for(int i = 0;i<size;++i)
-    {
-        sum += std::exp(in[i]);
-    }
-    for(int i = 0;i<size;++i)
-    {
-        in[i] = std::exp(in[i]/sum);
-    }
-}
-
 namespace MM
 {
-    NN::NN(int h1size, int outsize) : modelNr(count)
+	void softmax(std::vector<double> &in, std::size_t size)
+	{
+    		double sum = 0;
+    		for(size_t i = 0;i<size;++i)
+    		{
+			double j = std::exp(in[i]);
+			sum += j;
+    		}
+    		for(size_t i = 0;i<size;++i)
+    		{
+    		    in[i] = std::exp(in[i])/sum;
+    		}
+		//Check for a nan-value, and change it to 1 if one is found
+		for(auto& i : in)
+		{
+			if(isnan(i))
+				i = 1;
+		}
+	}
+
+    NN::NN(int h1size, int outsize) 
     {
-        count++;
-         
         srand(0);
         for(int i = 0;i<28*28;i++)
         {
@@ -74,25 +46,25 @@ namespace MM
         }
         for(int i = 0;i<h1size;i++)
         {
-            bias1.push_back((rand() % 20 - 10) / 10.0);
+            bias1.push_back((rand() % 20 - (double)10) / 15.0);
             h1.push_back(0.0);
         }
         for(int i = 0;i<outsize;i++)
         {
-            bias2.push_back((rand() % 20 - 10) / 10.0);
+            bias2.push_back((rand() % 20 - (double)5) / 15.0);
             out.push_back(0.0);
         }
-        for(int i = 0;i<input.size()*h1size;i++)
+	int wisize = input.size()*h1size;
+        for(int i = 0;i<wisize;i++)
         {
-            wi.push_back((rand() % 20 - 10) / 10.0);
+            wi.push_back((rand() % 10 - (double)5) / 15.0);
         }
-
+	int w1size = 100;
+	for(int i = 0;i<w1size;i++)
+	{
+		w1.push_back((rand() % 10 - (double)5) / 15.0);
+	}
         learningrate = 0.1;
-    }
-
-    bool NN::saveModel()
-    {
-        return 1;
     }
 
     double NN::relu(double d) const
@@ -115,11 +87,15 @@ namespace MM
         return d;
     }
 
+
+
     void NN::fprop(const std::vector<int> &in)
     {
         //Multiply the input layer with the weights between the input and h1 layers
         std::vector<double> inputwi = lmultiply(in, wi);
         //Run the outputs of the matrix multiplication through the ReLU function to get the hidden states
+	
+	
         for(int i = 0;i<h1.size();i++)
         {
             h1[i] = relu(inputwi[i]);
@@ -128,10 +104,16 @@ namespace MM
         std::vector<double> h1w = lmultiply(h1, w1);
         for(int i = 0;i<h1w.size();i++)
         {
-            out[i] = relu(h1w[i]);
+		out[i] = relu(h1w[i]);
+	//	std::cout << h1w[i] << " - " << out[i] << std::endl;
         }
         //Run the output layer through the softmax function
         softmax(out, out.size());
+	//for(auto& i : out)
+	//	std::cout << i << " ";
+	//std::cout << std::endl;
+	//std::cout << out[4] << std::endl;
+	//std::cout << onehot_toInt(out) << std::endl;
     }
 
     void NN::fprop()
@@ -153,24 +135,7 @@ namespace MM
         softmax(out, out.size());
     }
 
-    std::vector<double> NN::toOneHot(int v)
-    {
-        std::vector<double> vv;
-        for(int i = 0;i<10;i++)
-        {
-            if(i == v)
-            {
-                vv.push_back(1);
-            }
-            else
-            {
-                vv.push_back(0);
-            }
-        }
-        return vv;
-    }
-
-    void NN::bprop(const std::vector<double> targetoutput)
+    void NN::bprop(const std::vector<int> targetoutput)
     {
         //The variables holding the info of how much the weights should be adjusted
         std::vector<double> dh1outw;
@@ -182,21 +147,31 @@ namespace MM
         std::vector<double> diff1;
         std::vector<double> diff2;
 
+	
         //Calculate the difference between target and generated output
         for(int i = 0;i<10;i++)
         {
             diff2.push_back(out[i]-targetoutput[i]);
+
         }
 
+//	std::cout << h1.size() << " - " << diff2.size() << std::endl;
         //Calculate the adjustments needed for the weights and biases of the second layer
         dh1outw = wmultiply(h1, diff2);
+
+//	    std::cout << "wmultiply success!" << std::endl;
         dbias2 = bsum(diff2);
+//	std::cout << "bsum success!" << std::endl;
 
         //Calculate the adjustments needed for the weights and biases of the first layer
-        diff1 = lmultiply(drelu(h1), w1);                                                           //CHECK THE DIRECTION OF THIS IF TRAINING DOESNT WORK
+        diff1 = lmultiply(drelu(h1), w1); 
+//	std::cout << "lmultiply success!" << std::endl;
+	//CHECK THE DIRECTION OF THIS IF TRAINING DOESNT WORK
         dih1w = wmultiply(input, diff1);
+//	std::cout << "wmultiply2 success!" << std::endl;
         dbias1 = bsum(diff1);
-        
+//	std::cout << "bsum success!" << std::endl;
+       	updateParameters(dih1w, dh1outw, dbias1, dbias2); 
     }
 
     void NN::updateParameters(const std::vector<double> &dih1w, const std::vector<double> &dh1outw, double dbias1, double dbias2)
@@ -219,12 +194,28 @@ namespace MM
         }
     }
 
-	void NN::train(const std::list<std::tuple<std::vector<int>, std::vector<int>>> &trainingdata)
+	void NN::train(const std::list<std::tuple<std::vector<int>, int>> &trainingdata, unsigned int iterations)
 	{
+		int correct = 0;
+		int wrong = 0;
 		for(auto ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
         	{
-        		fprop(std::get<0>(*ptr));
-            		bprop(std::get<1>(*ptr));
+			for(int i = 0;i < iterations;i++)
+			{
+        			fprop(std::get<0>(*ptr));
+				int int_output = onehot_toInt(out);
+				int label = std::get<1>(*ptr);
+	//			for(auto& i : out)
+	//				std::cout << i << " ";
+	//			std::cout << std::endl;
+	//			std::cout << "Output: " << int_output << " - Reference output: " <<  label << std::endl;
+            			bprop(int_toOneHot(std::get<1>(*ptr), 10));
+				if(int_output != label)
+					wrong++;
+				else
+					correct++;
+			}
+			std::cout<< "Accuracy: " << ((double)correct/((double)correct+(double)wrong))*100 << "%\n";
 	        }
 	}
 
@@ -265,7 +256,21 @@ namespace MM
 
     std::vector<double> NN::wmultiply(const std::vector<double> &left, const std::vector<double> &right) const
     {
-        std::vector<double> weights;
+        std::vector<double> weights(left.size()*right.size(), 0);
+        for(int i = 0;i<left.size();i++)
+        {
+            for(int j = 0;j<right.size();j++)
+            {
+                weights[i*10+j] = left[i] * right[j];
+            }
+        }
+        return weights;
+    }
+
+    std::vector<double> NN::wmultiply(const std::vector<int> &left, const std::vector<double> &right) const
+    {
+        
+        std::vector<double> weights(left.size()*right.size(), 0);
         for(int i = 0;i<left.size();i++)
         {
             for(int j = 0;j<right.size();j++)
@@ -295,9 +300,12 @@ namespace MM
 			    input[i] = in[i];
 		    }
 	    }
+	    else
+		    return false;
+	    return true;
     }
 
-    bool NN::saveModel(std::string filename)
+    bool NN::saveModel(std::string filename) const
     {
 	    filename.append(".txt");
 	std::ofstream file;
@@ -314,7 +322,7 @@ namespace MM
 	}
 	file << std::endl;
 
-	for(auto ptr = biaswi.begin();ptr != wi.end();ptr++)
+	for(auto ptr = wi.begin();ptr != wi.end();ptr++)
 	{
 		file << *ptr << " ";
 	}
@@ -325,12 +333,15 @@ namespace MM
 		file << *ptr << " ";
 	}
 	file << std::endl;
+	file.close();
+	return 1;
     }
 
     int NN::predict(const std::vector<int> &in)
     {
 	    input = in;
 	    fprop();
+	    return onehot_toInt(out);
     }
 
 
