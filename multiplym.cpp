@@ -1,13 +1,12 @@
 #include "multiplym.h"
+#include <sstream>
 #include <vector>
 #include <fstream>
 #include <iterator>
 #include <stdlib.h>
 #include <iostream>
 #include <math.h>
-#include <assert.h>
 #include <list>
-#include "zlib.h"
 #include <errno.h>
 #include <stdio.h>
 #include <tuple>
@@ -20,11 +19,28 @@ namespace MM
 	void softmax(std::vector<double> &in, std::size_t size)
 	{
     		double sum = 0;
-    		for(size_t i = 0;i<size;++i)
+		for(auto& in_member : in)
+		{
+			double j = std::exp(in_member);
+			sum+=j;
+		}
+		/*
+		for(size_t i = 0;i<size;++i)
     		{
 			double j = std::exp(in[i]);
-			sum += j;
-    		}
+			sum+=j;
+			if(std::isinf(j) || sum == DBL_MAX)
+			{
+				for(auto& in_member : in)
+				{
+					in_member/=2;
+				}
+				//Start the summing process again
+				i = 0;
+				sum = 0;
+			}
+		}*/
+    		
     		for(size_t i = 0;i<size;++i)
     		{
     		    in[i] = std::exp(in[i])/sum;
@@ -37,6 +53,60 @@ namespace MM
 		}
 	}
 
+	NN::NN(int inputsize, int h1size, int outsize, std::string filename)
+	{
+		for(int i = 0;i<inputsize;i++)
+		{
+			input.push_back(0);
+		}
+		for(int i = 0;i<h1size;i++)
+		{
+			h1.push_back(0);
+		}
+		for(int i = 0;i<outsize;i++)
+		{
+			out.push_back(0);
+		}
+
+		std::ifstream file;
+		file.open(filename);
+		if(file)
+		{
+			size_t phase = 0;
+			double val;
+			while(phase < 10)
+			{
+				file >> val;
+				std::cout << val << "\n";
+				bias1.push_back(val);
+				phase++;
+			}
+			while(phase < 20)
+			{
+				file >> val;
+				bias2.push_back(val);
+				phase++;
+			}
+			while(phase < 7840 + 20)
+			{
+				file >> val;
+				wi.push_back(val);
+				phase++;
+			}
+			while(file >> val)
+			{
+				w1.push_back(val);
+				phase++;
+			}
+			file.close();
+		}
+		else
+			std::cout << "File not found!\n";
+	}			
+
+
+
+
     NN::NN(int h1size, int outsize) 
     {
         srand(0);
@@ -46,12 +116,12 @@ namespace MM
         }
         for(int i = 0;i<h1size;i++)
         {
-            bias1.push_back((rand() % 20 - (double)10) / 15.0);
+            bias1.push_back(0.001);
             h1.push_back(0.0);
         }
         for(int i = 0;i<outsize;i++)
         {
-            bias2.push_back((rand() % 20 - (double)5) / 15.0);
+            bias2.push_back(0.001);
             out.push_back(0.0);
         }
 	int wisize = input.size()*h1size;
@@ -64,7 +134,7 @@ namespace MM
 	{
 		w1.push_back((rand() % 10 - (double)5) / 15.0);
 	}
-        learningrate = 0.1;
+        learningrate = 0.08;
     }
 
     double NN::relu(double d) const
@@ -120,17 +190,20 @@ namespace MM
     {
         //Multiply the input layer with the weights between the input and h1 layers
         std::vector<double> inputwi = lmultiply(input, wi);
+	std::cout << "TEST4 inputwi size: " << inputwi.size() << std::endl;
         //Run the outputs of the matrix multiplication through the ReLU function to get the hidden states
         for(int i = 0;i<h1.size();i++)
         {
             h1[i] = relu(inputwi[i]);
         }
         //Run the outputs of the matrix multiplication through the ReLU function to get the final outputs
+	std::cout << "TEST5\n";
         std::vector<double> h1w = lmultiply(h1, w1);
         for(int i = 0;i<h1w.size();i++)
         {
             out[i] = relu(h1w[i]);
         }
+	std::cout << "TEST6\n";
         //Run the output layer through the softmax function
         softmax(out, out.size());
     }
@@ -138,8 +211,8 @@ namespace MM
     void NN::bprop(const std::vector<int> targetoutput)
     {
         //The variables holding the info of how much the weights should be adjusted
-        std::vector<double> dh1outw;
-        std::vector<double> dih1w;
+        std::vector<double> d_h1weights;
+        std::vector<double> d_inputweights;
         //The variables holding the info of how much the biases should be adjusted
         double dbias1;
         double dbias2;
@@ -151,43 +224,61 @@ namespace MM
         //Calculate the difference between target and generated output
         for(int i = 0;i<10;i++)
         {
-            diff2.push_back(out[i]-targetoutput[i]);
+            diff2.push_back(out[i]-(double)targetoutput[i]);
 
         }
+//	std::cout << "output: ";
+//	for(auto& member : out)
+//		std::cout << member << " ";
+//	std::cout << std::endl;
+//	std::cout << "label output: ";
+//	for(auto& member : targetoutput)
+//		std::cout << member << " ";
+//	std::cout << std::endl;
+//	std::cout << "diff2: ";
+//	int summ = 0;
+//	for(auto& member : diff2)
+//	{
+//		summ+=member;
+//		std::cout << member << " ";
+//	}
+//	std::cout << "\nThe sum of all differences: " << summ << std::endl;
 
 //	std::cout << h1.size() << " - " << diff2.size() << std::endl;
         //Calculate the adjustments needed for the weights and biases of the second layer
-        dh1outw = wmultiply(h1, diff2);
+        d_h1weights = wmultiply(h1, diff2);
 
 //	    std::cout << "wmultiply success!" << std::endl;
         dbias2 = bsum(diff2);
 //	std::cout << "bsum success!" << std::endl;
 
         //Calculate the adjustments needed for the weights and biases of the first layer
-        diff1 = lmultiply(drelu(h1), w1); 
-//	std::cout << "lmultiply success!" << std::endl;
-	//CHECK THE DIRECTION OF THIS IF TRAINING DOESNT WORK
-        dih1w = wmultiply(input, diff1);
-//	std::cout << "wmultiply2 success!" << std::endl;
+	diff1 =  lmultiply(lmultiply(diff2, w1), drelu(h1)); 
+
+        d_inputweights = wmultiply(input, diff1);
+
         dbias1 = bsum(diff1);
-//	std::cout << "bsum success!" << std::endl;
-       	updateParameters(dih1w, dh1outw, dbias1, dbias2); 
+
+       	updateParameters(d_inputweights, d_h1weights, dbias1, dbias2); 
     }
 
-    void NN::updateParameters(const std::vector<double> &dih1w, const std::vector<double> &dh1outw, double dbias1, double dbias2)
+    void NN::updateParameters(const std::vector<double> &d_inputweights, const std::vector<double> &d_h1weights, double dbias1, double dbias2)
     {
-        for(int i = 0;i<dih1w.size();i++)
+        for(int i = 0;i<wi.size();i++)
         {
-            wi[i] = wi[i] - learningrate * dih1w[i];
+            wi[i] = wi[i] - learningrate * d_inputweights[i];
         }
-        for(int i = 0;i<dh1outw.size();i++)
+        for(int i = 0;i<w1.size();i++)
         {
-            w1[i] = wi[i] - learningrate * dh1outw[i];
+            w1[i] = w1[i] - learningrate * d_h1weights[i];
         }
         for(int i = 0;i<bias1.size();i++)
         {
-            bias1[i] = bias1[i] - learningrate * dbias1;
+		            bias1[i] = bias1[i] - learningrate * dbias1;
         }
+//	std::cout <<"dbias1: " << dbias1 << " dbias2: " << dbias2 << std::endl;
+//		std::cin.get();
+
         for(int i = 0;i<bias2.size();i++)
         {
             bias2[i] = bias2[i] - learningrate * dbias2;
@@ -198,8 +289,14 @@ namespace MM
 	{
 		int correct = 0;
 		int wrong = 0;
+		size_t interval = 0;
+		size_t count = 0;
+		for(int j = 0;j < 10;j++)
+		{
 		for(auto ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
         	{
+			size_t label_correct = 0;
+			size_t label_incorrect = 0;
 			for(int i = 0;i < iterations;i++)
 			{
         			fprop(std::get<0>(*ptr));
@@ -208,15 +305,36 @@ namespace MM
 	//			for(auto& i : out)
 	//				std::cout << i << " ";
 	//			std::cout << std::endl;
-	//			std::cout << "Output: " << int_output << " - Reference output: " <<  label << std::endl;
-            			bprop(int_toOneHot(std::get<1>(*ptr), 10));
+//				std::cout << "Output: " << int_output << " - Reference output: " <<  label << std::endl;
 				if(int_output != label)
+				{
+					//If the output doesn't match the label,
+					//backpropagage
+         //   				std::cout << "Backpropagating...\n";
+					bprop(int_toOneHot(label, 10));
 					wrong++;
+					label_incorrect++;
+				}
 				else
+				{
+					std::cout << "Correct output at: " << i << std::endl;
+					i = 100;
 					correct++;
+					label_correct++;
+				}
+	//			std::cin.get();
 			}
-			std::cout<< "Accuracy: " << ((double)correct/((double)correct+(double)wrong))*100 << "%\n";
+			interval++;
+			count++;
+			if(interval == 100)
+			{
+				std::cout<< "Accuracy of the predictions for the last label: " << (double)label_correct / ((double)label_correct+(double)label_incorrect) << "\nOverall accuracy: " << ((double)correct/((double)correct+(double)wrong))*100 << "%\nTraining pairs used: " << count << std::endl;
+				interval = 0;
+				label_correct = 0;
+				label_incorrect = 0;
+			}
 	        }
+		}
 	}
 
     std::vector<double> NN::lmultiply(const std::vector<int> &left, const std::vector<double> &right) const
@@ -226,7 +344,7 @@ namespace MM
         //osize is the number of "columns" in the weight matrix, sort of
         int osize = rsize/lsize;
         std::vector<double> output(osize);
-        for(int i = 0;i < lsize;i++)
+	for(int i = 0;i < lsize;i++)
         {
             for(int j = 0;j < osize;j++)
             {
@@ -283,10 +401,10 @@ namespace MM
 
     double NN::bsum(const std::vector<double> &v) const
     {
-        double d;
-        for(int i = 0;i<v.size();i++)
+        double d = 0;
+        for(auto& i : v)
         {
-            d += v[i];
+            d += i;
         }
         return d;
     }
@@ -339,8 +457,10 @@ namespace MM
 
     int NN::predict(const std::vector<int> &in)
     {
-	    input = in;
+	    setInput(in);
+	    std::cout << "TEST2\n";
 	    fprop();
+	    std::cout << "TEST3\n";
 	    return onehot_toInt(out);
     }
 

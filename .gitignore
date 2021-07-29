@@ -8,6 +8,7 @@ example.txt.gz
 output.txt
 softmax_test.cpp
 test.out
-model.txt
+model*
 asdasd.txt
 labelsout.txt
+testnumber.txt

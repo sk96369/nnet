@@ -58,15 +58,16 @@ namespace MM
         //Function for calculating the derivates of relu for a vector
         std::vector<double> drelu(const std::vector<double> &vec) const;
 
-	//Function for setting inputs. Returns false if the input vector is of wrong size,
-	//true otherwise.
-	bool setInput(const std::vector<int> &in);
 
         public:
-        
+ 
+	//Function for setting inputs. Returns false if the input vector is of wrong size,
+	//true otherwise.
+	bool setInput(const std::vector<int> &in);      
+	NN(int inputsize, int h1size, int outsize, std::string filename);
         NN(int h1size, int outsize);
         //Training function, the first member of the tuple is an image, the second is the label
-        void train(const std::list<std::tuple<std::vector<int>, int>> &trainingdata, unsigned int iterations = 10);
+        void train(const std::list<std::tuple<std::vector<int>, int>> &trainingdata, unsigned int iterations = 100);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
 	bool saveModel(std::string filename) const;
 	//Function that makes a prediction based on the given inputs

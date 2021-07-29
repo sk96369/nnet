@@ -8,25 +8,45 @@
 //Main.cpp
 int main(int argc, char* argv[])
 {
-    std::ofstream parameters;
     std::fstream pretrained_file;
     std::string trainingdata_filename = "traininglabels";
     std::string trainingdata2_filename = "imagedata";
 	std::list<std::tuple<std::vector<int>, int>> trainingdata;
     if(strcmp(argv[1], "loadparams") == 0)
     {
-        pretrained_file.open("model.txt");
-        if(!parameters)
+        if(argc != 3)
         {
-            std::cout << "Unable to open \"model.txt\"";
+            std::cout << "Incorrect number of arguments";
             exit(1);
         }
-        std::string line;
-        while(pretrained_file >> line)
-        {
-            std::cout << line << std::endl;
-        }
-	pretrained_file.close();
+	MM::NN network(784, 10, 10, argv[2]);
+	std::string str;
+	std::cout << "Type in the filename to make predictions on\n";
+	std::cin >> str;
+	std::ifstream numberfile;
+	numberfile.open(str);
+	std::cout << "TEST\n";
+	char charpixel;
+	if(numberfile)
+	{
+		std::vector<int> image;
+
+		while(numberfile.get(charpixel))
+		{
+			if(charpixel != '\n')
+				image.push_back((int)charpixel);
+		}
+		std::cout << "Image size: " << image.size() << " pixels.\n";
+		std::cout << "Prediction: " << network.predict(image) << std::endl;
+		image.clear();
+		numberfile.close();
+	}
+	else
+	{
+		std::cout << "File does not exist!";
+		exit(1);
+	}
+
     }
 
     if(strcmp(argv[1], "trainmodel") == 0)
@@ -46,8 +66,8 @@ int main(int argc, char* argv[])
 	    }
 	    MM::NN network(10, 10);
 	    network.train(trainingdata);
-
-	    network.saveModel("model.txt");
+		
+	    network.saveModel(argv[2]);
     }
 
     return 0;
