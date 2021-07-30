@@ -85,132 +85,52 @@ namespace MM
         learningrate = 0.08;
     }
 
-    double NN::relu(double d) const
-    {
-        if(d > 0)
-        {
-            return d;
-        }
-        return 0;
-    }
-
-    std::vector<double> NN::drelu(const std::vector<double> &vec) const
-    {
-        std::vector<double> d;
-        for(int i = 0;i<vec.size();i++)
-        {
-            //This works because the slope past 0 is 1, and 0 at 0 and below
-            d.push_back(vec[i]>0);
-        }
-        return d;
-    }
-
-
-
-    void NN::fprop(const std::vector<int> &in)
-    {
-        //Multiply the input layer with the weights between the input and h1 layers
-        std::vector<double> inputwi = lmultiply(in, wi);
-        //Run the outputs of the matrix multiplication through the ReLU function to get the hidden states
-	
-	
-        for(int i = 0;i<h1.size();i++)
-        {
-            h1[i] = relu(inputwi[i]);
-        }
-        //Run the outputs of the matrix multiplication through the ReLU function to get the final outputs
-        std::vector<double> h1w = lmultiply(h1, w1);
-        for(int i = 0;i<h1w.size();i++)
-        {
-		out[i] = relu(h1w[i]);
-	//	std::cout << h1w[i] << " - " << out[i] << std::endl;
-        }
-        //Run the output layer through the softmax function
-        softmax(out, out.size());
-	//for(auto& i : out)
-	//	std::cout << i << " ";
-	//std::cout << std::endl;
-	//std::cout << out[4] << std::endl;
-	//std::cout << onehot_toInt(out) << std::endl;
-    }
+    
 
     void NN::fprop()
     {
         //Multiply the input layer with the weights between the input and h1 layers
-        std::vector<double> inputwi = lmultiply(input, wi);
-	std::cout << "TEST4 inputwi size: " << inputwi.size() << std::endl;
-        //Run the outputs of the matrix multiplication through the ReLU function to get the hidden states
-        for(int i = 0;i<h1.size();i++)
-        {
-            h1[i] = relu(inputwi[i]);
-        }
-        //Run the outputs of the matrix multiplication through the ReLU function to get the final outputs
-	std::cout << "TEST5\n";
-        std::vector<double> h1w = lmultiply(h1, w1);
-        for(int i = 0;i<h1w.size();i++)
-        {
-            out[i] = relu(h1w[i]);
-        }
-	std::cout << "TEST6\n";
-        //Run the output layer through the softmax function
-        softmax(out, out.size());
+	h1 = mm(input, wi);
+	//Add the bias to each of the hidden states	
+	add(h1, bias1);
+        //Run relu function on the hidden states
+        relu(h1);
+	out = mm(h1, w1);
+        softmax(out);
     }
 
-    void NN::bprop(const std::vector<int> targetoutput)
+    void NN::bprop(const matrix<int> &targetoutput)
     {
+	int batch_size = targetoutput.rows();
         //The variables holding the info of how much the weights should be adjusted
-        std::vector<double> d_h1weights;
-        std::vector<double> d_inputweights;
+        matrix<double> d_w1;
+        matrix<double> d_inputweights;
         //The variables holding the info of how much the biases should be adjusted
         double dbias1;
         double dbias2;
         //Variable for the difference between target and generated output
-        std::vector<double> t2;
-        std::vector<double> t;
-
+        matrix<double> delta;
+	matrix<double> delta2;
 	
+
         //Calculate the difference between target and generated output
-        for(int i = 0;i<10;i++)
-        {
-            t.push_back((double)targetoutput[i]-out[i]);
-
-        }
-//	std::cout << "output: ";
-//	for(auto& member : out)
-//		std::cout << member << " ";
-//	std::cout << std::endl;
-//	std::cout << "label output: ";
-//	for(auto& member : targetoutput)
-//		std::cout << member << " ";
-//	std::cout << std::endl;
-//	std::cout << "t: ";
-//	int summ = 0;
-//	for(auto& member : t)
-//	{
-//		summ+=member;
-//		std::cout << member << " ";
-//	}
-//	std::cout << "\nThe sum of all differences: " << summ << std::endl;
-
-//	std::cout << h1.size() << " - " << t.size() << std::endl;
+	delta = getError(targetoutput, out);
         //Calculate the adjustments needed for the weights and biases of the second layer
-        d_h1weights = wmultiply(h1, t);
-
-//	    std::cout << "wmultiply success!" << std::endl;
-        dbias2 = bsum(t);
-//	std::cout << "bsum success!" << std::endl;
+	d_w1 = scalar_m(mm(delta, transpose(h1)), 1/batch_size);
+	dbias2 = scalar_m(sum_m(delta), 1/batch_size);
 
         //Calculate the adjustments needed for the weights and biases of the first layer
-	t2 =  lmultiply(lmultiply(t, w1), drelu(h1)); 
+	delta2 = mm(transpose(w1), delta)
+		lmultiply(lmultiply(t, w1), drelu(h1)); 
 
         d_inputweights = wmultiply(input, t2);
 
         dbias1 = bsum(t2);
 
-       	updateParameters(d_inputweights, d_h1weights, dbias1, dbias2); 
+       	updateParameters(d_inputweights, d_w1, dbias1, dbias2); 
     }
 
-    void NN::updateParameters(const std::vector<double> &d_inputweights, const std::vector<double> &d_h1weights, double dbias1, double dbias2)
+    void NN::updateParameters(const std::vector<double> &d_inputweights, const std::vector<double> &d_w1, double dbias1, double dbias2)
     {
         for(int i = 0;i<wi.size();i++)
         {
@@ -218,7 +138,7 @@ namespace MM
         }
         for(int i = 0;i<w1.size();i++)
         {
-            w1[i] = w1[i] - learningrate * d_h1weights[i];
+            w1[i] = w1[i] - learningrate * d_w1[i];
         }
         for(int i = 0;i<bias1.size();i++)
         {
@@ -234,55 +154,36 @@ namespace MM
     }
 
 
-        void train(matrix<int> labelmatrix, matrix<int> imagematrix, int batch_size, int iterations)
+        void train(std::vector<int> labels, int batch_size, int epoch)
 	{
 		int correct = 0;
 		int wrong = 0;
 		size_t interval = 0;
 		size_t count = 0;
-		for(int j = 0;j < 10;j++)
+		for(int j = 0;j < epoch;j++)
 		{
-		for( .begin();ptr != trainingdata.end();ptr++)
-        	{
-			size_t label_correct = 0;
-			size_t label_incorrect = 0;
-			for(int i = 0;i < iterations;i++)
-			{
-        			fprop(imagematrix);
-				int int_output = onehot_toInt(out);
-				int label = std::get<1>(*ptr);
-	//			for(auto& i : out)
-	//				std::cout << i << " ";
-	//			std::cout << std::endl;
-//				std::cout << "Output: " << int_output << " - Reference output: " <<  label << std::endl;
-				if(int_output != label)
-				{
-					//If the output doesn't match the label,
-					//backpropagage
-         //   				std::cout << "Backpropagating...\n";
-					bprop(int_toOneHot(label, 10));
-					wrong++;
-					label_incorrect++;
-				}
-				else
-				{
-	//				std::cout << "Correct output at: " << i << std::endl;
-					i = 100;
-					correct++;
-					label_correct++;
-				}
-	//			std::cin.get();
+        		fprop();
+			matrix<int> oh_labels = int_toOneHot(labels, 10);
+
+			bprop(oh_labels);
 			}
-			interval++;
-			count++;
-			if(interval == 100)
+			else
 			{
-				std::cout<< "Accuracy of the predictions for the last label: " << (double)label_correct / ((double)label_correct+(double)label_incorrect) << "\nOverall accuracy: " << ((double)correct/((double)correct+(double)wrong))*100 << "%\nTraining pairs used: " << count << std::endl;
-				interval = 0;
-				label_correct = 0;
-				label_incorrect = 0;
+//				std::cout << "Correct output at: " << i << std::endl;
+				i = 100;
+				correct++;
+				label_correct++;
 			}
-	        }
+//			std::cin.get();
+		}
+		interval++;
+		count++;
+		if(interval == 100)
+		{
+			std::cout<< "Accuracy of the predictions for the last label: " << (double)label_correct / ((double)label_correct+(double)label_incorrect) << "\nOverall accuracy: " << ((double)correct/((double)correct+(double)wrong))*100 << "%\nTraining pairs used: " << count << std::endl;
+			interval = 0;
+			label_correct = 0;
+			label_incorrect = 0;
 		}
 	}
 

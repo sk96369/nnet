@@ -7,7 +7,7 @@
 #include "mm_math.h"
 
 const int batchsize = 60000;
-const int iterations = 1;
+const int epoch = 1;
 
 //Main.cpp
 int main(int argc, char* argv[])
@@ -56,13 +56,12 @@ int main(int argc, char* argv[])
 	if(strcmp(argv[1], "trainmodel") == 0)
 	{
 		std::vector<int> labels = readmnistgz(trainingdata_filename);
-		matrix<int> labelmatrix(labels, 1, 60000);
 		std::vector<int> images = readmnistgz(trainingdata2_filename);
 		matrix<int> imagematrix(images, 784, 60000);
 
 	}
-	MM::NN network(10, 10);
-	network.train(labelmatrix, imagematrix, batchsize, iterations);
+	MM::NN network(imagematrix, 10, 10);
+	network.train(labels, batchsize, epoch);
 		
 	network.saveModel(argv[2]);
 	}
