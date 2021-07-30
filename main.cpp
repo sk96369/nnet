@@ -4,6 +4,10 @@
 #include <iostream>
 #include <string>
 #include "gzreader.cpp"
+#include "mm_math.h"
+
+const int batchsize = 60000;
+const int iterations = 1;
 
 //Main.cpp
 int main(int argc, char* argv[])
@@ -11,7 +15,7 @@ int main(int argc, char* argv[])
     std::fstream pretrained_file;
     std::string trainingdata_filename = "traininglabels";
     std::string trainingdata2_filename = "imagedata";
-	std::list<std::tuple<std::vector<int>, int>> trainingdata;
+//	std::list<std::tuple<std::vector<int>, int>> trainingdata;
     if(strcmp(argv[1], "loadparams") == 0)
     {
         if(argc != 3)
@@ -47,28 +51,21 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-    }
+	}
 
-    if(strcmp(argv[1], "trainmodel") == 0)
-    {
-	    std::vector<int> labels = readmnistgz(trainingdata_filename);
-	    std::vector<int> images = readmnistgz(trainingdata2_filename);
+	if(strcmp(argv[1], "trainmodel") == 0)
+	{
+		std::vector<int> labels = readmnistgz(trainingdata_filename);
+		matrix<int> labelmatrix(labels, 1, 60000);
+		std::vector<int> images = readmnistgz(trainingdata2_filename);
+		matrix<int> imagematrix(images, 784, 60000);
 
-	    for(int i = 0;i < labels.size();i++)
-	    {
-		    std::vector<int> image;
-		    for(int j = 0;j < 784;j++)
-		    {
-			    image.push_back(images[i*784+j]);
-		    }
-		    std::tuple<std::vector<int>, int> nextmember = std::make_tuple(image, labels[i]);
-		    trainingdata.push_back(nextmember);
-	    }
-	    MM::NN network(10, 10);
-	    network.train(trainingdata);
+	}
+	MM::NN network(10, 10);
+	network.train(labelmatrix, imagematrix, batchsize, iterations);
 		
-	    network.saveModel(argv[2]);
-    }
+	network.saveModel(argv[2]);
+	}
 
-    return 0;
+	return 0;
 }

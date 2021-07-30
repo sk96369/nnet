@@ -12,46 +12,31 @@ namespace MM
     class NN
     {
         // Input
-        std::vector<int> input;
+        matrix<int> input;
         // Hidden layers
-        std::vector<double> h1;
+        matrix<double> h1;
         // Output
-        std::vector<double> out;
+        matrix<double> out;
         //Biases for the first hidden layer and the output layer respectively
-        std::vector<double> bias1;
-        std::vector<double> bias2;
+        matrix<double> bias1;
+        matrix<double> bias2;
         //Learning rate
         double learningrate;
 
         //The weight "matrices", saved as 1-D vectors
-        std::vector<double> wi;
-        std::vector<double> w1;
+        matrix<double> wi;
+        matrix<double> w1;
 
         //Forward propagation function
-        void fprop(const std::vector<int> &in);
+        void fprop(const matrix<int> &in);
         //Backpropagation function. Takes target output as its parameter
-        void bprop(const std::vector<int> targetoutput);
+        void bprop(const matrix<int> targetoutput);
 
 	//Forward propagation function without parameters
 	void fprop();
 
-	
-        //Matrix multiplication functions for calculating the products of nodes * weights.
-        //The parameter named "left" is the vector of nodes that are multiplied by the weights, or, "right"
-        std::vector<double> lmultiply(const std::vector<double> &left, const std::vector<double> &right) const;
-	std::vector<double> lmultiply(const std::vector<int> &left, const std::vector<double> &right) const;
-
-
-        /*Matrix multiplication function for calculating weights during backpropagation.
-        The parameter named "left" is the layer of nodes closest to the input, "right" is the error*/
-        std::vector<double> wmultiply(const std::vector<double> &left, const std::vector<double> &right) const;
-	std::vector<double> wmultiply(const std::vector<int> &left, const std::vector<double> &right) const;
-
         //Function for updating the parameters
         void updateParameters(const std::vector<double> &dih1w, const std::vector<double> &dh1outw, double dbias1, double dbias2);
-
-        //Function for summing the values of a vector and returning it
-        double bsum(const std::vector<double> &v) const;
 
         //ReLU-activation function. Returns 0 if d<0, returns the value of d otherwise.
         double relu(double d) const;
@@ -66,8 +51,8 @@ namespace MM
 	bool setInput(const std::vector<int> &in);      
 	NN(int inputsize, int h1size, int outsize, std::string filename);
         NN(int h1size, int outsize);
-        //Training function, the first member of the tuple is an image, the second is the label
-        void train(const std::list<std::tuple<std::vector<int>, int>> &trainingdata, unsigned int iterations = 100);
+        //Training function
+        void train(matrix<int> labelmatrix, matrix<int> imagematrix, int batch_size, int iterations);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
 	bool saveModel(std::string filename) const;
 	//Function that makes a prediction based on the given inputs

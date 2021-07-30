@@ -16,42 +16,7 @@
 //multiplym.cpp
 namespace MM
 {
-	void softmax(std::vector<double> &in, std::size_t size)
-	{
-    		double sum = 0;
-		for(auto& in_member : in)
-		{
-			double j = std::exp(in_member);
-			sum+=j;
-		}
-		/*
-		for(size_t i = 0;i<size;++i)
-    		{
-			double j = std::exp(in[i]);
-			sum+=j;
-			if(std::isinf(j) || sum == DBL_MAX)
-			{
-				for(auto& in_member : in)
-				{
-					in_member/=2;
-				}
-				//Start the summing process again
-				i = 0;
-				sum = 0;
-			}
-		}*/
-    		
-    		for(size_t i = 0;i<size;++i)
-    		{
-    		    in[i] = std::exp(in[i])/sum;
-    		}
-		//Check for a nan-value, and change it to 1 if one is found
-		for(auto& i : in)
-		{
-			if(isnan(i))
-				i = 1;
-		}
-	}
+	
 
 	NN::NN(int inputsize, int h1size, int outsize, std::string filename)
 	{
@@ -107,33 +72,16 @@ namespace MM
 
 
 
-    NN::NN(int h1size, int outsize) 
+    NN::NN(matrix<int> &in, int h1size, int outsize, int batch_size) 
     {
-        srand(0);
-        for(int i = 0;i<28*28;i++)
-        {
-            input.push_back(0);
-        }
-        for(int i = 0;i<h1size;i++)
-        {
-            bias1.push_back(0.001);
-            h1.push_back(0.0);
-        }
-        for(int i = 0;i<outsize;i++)
-        {
-            bias2.push_back(0.001);
-            out.push_back(0.0);
-        }
-	int wisize = input.size()*h1size;
-        for(int i = 0;i<wisize;i++)
-        {
-            wi.push_back((rand() % 10 - (double)5) / 15.0);
-        }
-	int w1size = 100;
-	for(int i = 0;i<w1size;i++)
-	{
-		w1.push_back((rand() % 10 - (double)5) / 15.0);
-	}
+	
+	input = in;
+	h1 = matrix<double>(0.0, h1size, batch_size);
+	bias1 = matrix<double>(0.01, 10, 1);
+	bias2 = matrix<double>(0.01, 10, 1);
+	out = matrix<double>(0.0, outsize, batch_size);
+	wi = matrix<double>(-0.5, 0.5, 10, 10);
+	w1 = matrix<double>(-0.5, 0.5, 10, 10);
         learningrate = 0.08;
     }
 
@@ -217,14 +165,14 @@ namespace MM
         double dbias1;
         double dbias2;
         //Variable for the difference between target and generated output
-        std::vector<double> diff1;
-        std::vector<double> diff2;
+        std::vector<double> t2;
+        std::vector<double> t;
 
 	
         //Calculate the difference between target and generated output
         for(int i = 0;i<10;i++)
         {
-            diff2.push_back(out[i]-(double)targetoutput[i]);
+            t.push_back((double)targetoutput[i]-out[i]);
 
         }
 //	std::cout << "output: ";
@@ -235,29 +183,29 @@ namespace MM
 //	for(auto& member : targetoutput)
 //		std::cout << member << " ";
 //	std::cout << std::endl;
-//	std::cout << "diff2: ";
+//	std::cout << "t: ";
 //	int summ = 0;
-//	for(auto& member : diff2)
+//	for(auto& member : t)
 //	{
 //		summ+=member;
 //		std::cout << member << " ";
 //	}
 //	std::cout << "\nThe sum of all differences: " << summ << std::endl;
 
-//	std::cout << h1.size() << " - " << diff2.size() << std::endl;
+//	std::cout << h1.size() << " - " << t.size() << std::endl;
         //Calculate the adjustments needed for the weights and biases of the second layer
-        d_h1weights = wmultiply(h1, diff2);
+        d_h1weights = wmultiply(h1, t);
 
 //	    std::cout << "wmultiply success!" << std::endl;
-        dbias2 = bsum(diff2);
+        dbias2 = bsum(t);
 //	std::cout << "bsum success!" << std::endl;
 
         //Calculate the adjustments needed for the weights and biases of the first layer
-	diff1 =  lmultiply(lmultiply(diff2, w1), drelu(h1)); 
+	t2 =  lmultiply(lmultiply(t, w1), drelu(h1)); 
 
-        d_inputweights = wmultiply(input, diff1);
+        d_inputweights = wmultiply(input, t2);
 
-        dbias1 = bsum(diff1);
+        dbias1 = bsum(t2);
 
        	updateParameters(d_inputweights, d_h1weights, dbias1, dbias2); 
     }
@@ -274,18 +222,19 @@ namespace MM
         }
         for(int i = 0;i<bias1.size();i++)
         {
-		            bias1[i] = bias1[i] - learningrate * dbias1;
+		            bias1[i] -= learningrate * dbias1;
         }
-//	std::cout <<"dbias1: " << dbias1 << " dbias2: " << dbias2 << std::endl;
-//		std::cin.get();
+	std::cout <<"dbias1: " << dbias1 << " dbias2: " << dbias2 << std::endl;
+		std::cin.get();
 
         for(int i = 0;i<bias2.size();i++)
         {
-            bias2[i] = bias2[i] - learningrate * dbias2;
+            bias2[i] -= learningrate * dbias2;
         }
     }
 
-	void NN::train(const std::list<std::tuple<std::vector<int>, int>> &trainingdata, unsigned int iterations)
+
+        void train(matrix<int> labelmatrix, matrix<int> imagematrix, int batch_size, int iterations)
 	{
 		int correct = 0;
 		int wrong = 0;
@@ -293,13 +242,13 @@ namespace MM
 		size_t count = 0;
 		for(int j = 0;j < 10;j++)
 		{
-		for(auto ptr = trainingdata.begin();ptr != trainingdata.end();ptr++)
+		for( .begin();ptr != trainingdata.end();ptr++)
         	{
 			size_t label_correct = 0;
 			size_t label_incorrect = 0;
 			for(int i = 0;i < iterations;i++)
 			{
-        			fprop(std::get<0>(*ptr));
+        			fprop(imagematrix);
 				int int_output = onehot_toInt(out);
 				int label = std::get<1>(*ptr);
 	//			for(auto& i : out)
@@ -317,7 +266,7 @@ namespace MM
 				}
 				else
 				{
-					std::cout << "Correct output at: " << i << std::endl;
+	//				std::cout << "Correct output at: " << i << std::endl;
 					i = 100;
 					correct++;
 					label_correct++;
