@@ -13,11 +13,14 @@ namespace MM
 			return mat<double>(0, 0, 0.0);
 
 		mat<double> newmatrix(right.columns(), left.rows(), (double)0.0);
-		for(int i = 0;i<left.columns();i++)
+		for(int i = 0;i<newmatrix.rows();i++)
 		{
-			for(int j = 0;j<left.rows();j++)
+			for(int j = 0;j<newmatrix.columns();j++)
 			{
-				newmatrix.m[i][j] += left.m[i][j] * right.m[j][i];
+				for(int k = 0;k < left.columns();k++)
+				{
+					newmatrix.m[i][j] += left.m[i][k] * right.m[k][j];
+				}
 			}
 		}
 		return newmatrix;

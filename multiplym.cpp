@@ -90,12 +90,12 @@ namespace MM
     void NN::fprop()
     {
         //Multiply the input layer with the weights between the input and h1 layers
-	h1 = mm(input, wi);
+	h1 = mm(wi, input.transpose());
 	//Add the bias to each of the hidden states	
 	add(h1, bias1);
         //Run relu function on the hidden states
         relu(h1);
-	out = mm(h1, w1);
+	out = mm(w1, h1);
         softmax(out);
     }
 
@@ -116,7 +116,7 @@ namespace MM
         //Calculate the difference between target and generated output
 	delta = getError(targetoutput, out);
         //Calculate the adjustments needed for the weights and biases of the second layer
-	d_w1 = scalar_m(mm(delta, transpose(h1)), 1/batch_size);
+	d_w1 = scalar_m(mm(h1, delta), 1/batch_size);
 	dbias2 = scalar_m(sum_m(delta), 1/batch_size);
 
         //Calculate the adjustments needed for the weights and biases of the first layer
