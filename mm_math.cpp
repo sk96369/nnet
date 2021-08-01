@@ -26,7 +26,7 @@ namespace MM
 		return newmatrix;
 	}
 		
-
+/*
 	template <typename A, typename B>
 	mat<double> dot(const mat<A> &left, const mat<B> &right)
 	{
@@ -54,6 +54,7 @@ namespace MM
 		return sum;
 
 	}
+*/
 /*			MAYBE LATER
 	template <typename A, typename B>
 	mat<double> dot(const mat<A> &left, const mat<B> &right)
@@ -80,34 +81,37 @@ namespace MM
 	*/
 
 	template <typename A, typename B>
-	std::vector<double> hadamard(const mat<A> &left, const mat<B> &right)
+	mat<double> hadamard(const mat<A> &left, const mat<B> &right)
 	{
 		if(left.rows() == right.rows() && left.columns() == right.columns())
 		{
 			mat<double> product(left);
-			for(int i = 0;i<y_s;i++)
+			for(int i = 0;i<left.rows();i++)
 			{
-				for(int j = 0;j<x_s;j++)
+				for(int j = 0;j<left.columns();j++)
 				{
 					product.m[i][j] *= (double)right.m[i][j];
+				}
 			}
 			return product;
 		}
 		std::cout << "Incorrect vector sizes, returning an empty vector...\n";
-		return mat<double> empty(0, 0, 0);
+		return mat<double>(0, 0, 0);
 	}
 
-	mat(double a, double b, int x, int y) : x_s(x), y_s(y)
+	template<typename B>
+	mat<B>::mat(double a, double b, int x, int y) : x_s(x), y_s(y)
 	{
+		std::random_device rd;
+		std::mt19937 gen(rd());
 		std::uniform_real_distribution<double> distr(a, b);
-		std::default_random_engine re;
 		m = std::vector<std::vector<double>>(y);
 		for(auto& i : m)
 		{
 			std::vector<double> newline;
 			for(int j = 0;j<x;j++)
 			{
-				newline.push_back(double random_double = unif(re));
+				newline.push_back(distr(gen));
 			}
 		}
 	}
@@ -153,10 +157,10 @@ namespace MM
 	}
 
 	
-	template<typename A>
-	std::vector<std::vector<A>> mat<A>::transpose()
+	template<typename B>
+	mat<B> mat<B>::transpose()
 	{
-		mat<A> transposed(y_s, x_s, m[0][0]);
+		mat<B> transposed(y_s, x_s, m[0][0]);
 		for(int i = 0;i < x_s;i++)
 		{
 			for(int j = 0;j < y_s;j++)
@@ -167,10 +171,10 @@ namespace MM
 		return transposed;
 	}
 
-	template<typename A>
-	std::vector<A> mat<A>::getVector() const
+	template<typename B>
+	std::vector<B> mat<B>::getVector() const
 	{
-		std::vector<A> vec;
+		std::vector<B> vec;
 		if(x_s > 1)
 		{
 			if(y_s > 1)
@@ -224,13 +228,13 @@ namespace MM
 	{
 		std::vector<double> vec = right.getVector();
 		int vec_size = vec.size();
-		if(vec_size == left.getcolumns());
+		if(vec_size == left.rows());
 		{
-			for(auto& i : left.m)
+			for(for int i = 0;i<left.columns())
 			{
-				for(int j = 0;j<vec_size;j++)
+				for(int j = 0;j<left.rows();j++)
 				{
-					i[j] += right[j];
+					left.m[j][i] += vec[j];
 				}
 			}
 			return true;
@@ -289,7 +293,7 @@ namespace MM
 	}
 
 	template<typename A>
-	mat<A> scalar_m(mat<A> &original, double scalar)
+	mat<A> scalar_m(mat<A> original, double scalar)
 	{
 		mat<A> product(original);
 		for(auto& i : product.m)

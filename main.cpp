@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
             std::cout << "Incorrect number of arguments";
             exit(1);
         }
-	MM::NN network(784, 10, 10, argv[2]);
+	//MM::NN network(784, 10, 10, argv[2]);
 	std::string str;
 	std::cout << "Type in the filename to make predictions on\n";
 	std::cin >> str;
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 				image.push_back((int)charpixel);
 		}
 		std::cout << "Image size: " << image.size() << " pixels.\n";
-		std::cout << "Prediction: " << network.predict(image) << std::endl;
+	//	std::cout << "Prediction: " << network.predict(image) << std::endl;
 		image.clear();
 		numberfile.close();
 	}
@@ -57,14 +57,16 @@ int main(int argc, char* argv[])
 	{
 		std::vector<int> labels = readmnistgz(trainingdata_filename);
 		std::vector<int> images = readmnistgz(trainingdata2_filename);
-		matrix<int> imagematrix(images, 784, 60000);
+		MM::mat<int> imagematrix(images, 784, 60000);
 
+	
+		MM::NN network(imagematrix, 10, 10, batchsize);
+	
+		network.train(labels, batchsize, epoch);
+	
+		network.saveModel(argv[2]);
 	}
-	MM::NN network(imagematrix, 10, 10);
-	network.train(labels, batchsize, epoch);
 		
-	network.saveModel(argv[2]);
-	}
 
 	return 0;
 }

@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include "mm_math.h"
 
 //multiplym.h
 namespace MM
@@ -10,7 +11,7 @@ namespace MM
     class NN
     {
         // Input
-        matrix<int> input;
+        mat<int> input;
         // Hidden layers
         mat<double> h1;
 	mat<double> relu_h1;
@@ -43,13 +44,14 @@ namespace MM
 	//Function for setting inputs. Returns false if the input vector is of wrong size,
 	//true otherwise.
 //	bool setInput(const std::vector<int> &in);      
-	NN(int inputsize, int h1size, int outsize, std::string filename);
-        NN(int h1size, int outsize);
+//	NN(int inputsize, int h1size, int outsize, std::string filename);
+	template<typename A>
+        NN(mat<A> in, int h1size, int outsize, int batch_size);
         //Training function
-        void train(matrix<int> labelmatrix, int batch_size, int epoch);
+        void train(std::vector<int> labelmatrix, int batch_size, int epoch);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
 	bool saveModel(std::string filename) const;
 	//Function that makes a prediction based on the given inputs
-	int predict(const std::vector<int> &in);
+	std::vector<int> predict(const mat<int> &in);
     };
 }
