@@ -76,12 +76,14 @@ namespace MM
     {
 	
 	input = in;
-	h1 = matrix<double>(0.0, h1size, batch_size);
-	bias1 = matrix<double>(0.01, 10, 1);
-	bias2 = matrix<double>(0.01, 10, 1);
-	out = matrix<double>(0.0, outsize, batch_size);
-	wi = matrix<double>(-0.5, 0.5, 10, 10);
-	w1 = matrix<double>(-0.5, 0.5, 10, 10);
+	h1 = mat<double>(0.0, batch_size, h1size);
+	relu_h1 = mat<double>(h1);
+	bias1 = mat<double>(0.01, 10, 1);
+	bias2 = mat<double>(0.01, 10, 1);
+	out = mat<double>(0.0, outsize, batch_size);
+	h2 = mat<double>(out);
+	wi = mat<double>(-0.5, 0.5, 10, 10);
+	w1 = mat<double>(-0.5, 0.5, 10, 10);
         learningrate = 0.08;
     }
 
@@ -94,9 +96,9 @@ namespace MM
 	//Add the bias to each of the hidden states	
 	add(h1, bias1);
         //Run relu function on the hidden states
-        relu(h1);
-	out = mm(w1, h1);
-        softmax(out);
+	relu_h1 =getRelu(h1);
+	h2 = transpose(mm(w1, h1_relu));
+        out = getSoftmax(h2);
     }
 
     void NN::bprop(const matrix<int> &targetoutput)
@@ -116,40 +118,41 @@ namespace MM
         //Calculate the difference between target and generated output
 	delta = getError(targetoutput, out);
         //Calculate the adjustments needed for the weights and biases of the second layer
-	d_w1 = scalar_m(mm(h1, delta), 1/batch_size);
+	d_w1 = scalar_m(mm(h1, delta)), 1/batch_size);
 	dbias2 = scalar_m(sum_m(delta), 1/batch_size);
 
         //Calculate the adjustments needed for the weights and biases of the first layer
-	delta2 = mm(transpose(w1), delta)
-		lmultiply(lmultiply(t, w1), drelu(h1)); 
+	delta2 = hadamard(mm(w1,transpose(delta)), drelu(h1)); 
 
-        d_inputweights = wmultiply(input, t2);
+        d_inputweights = scalar_m(mm(hi, transpose(delta2)), 1/batch_size);
 
-        dbias1 = bsum(t2);
+        dbias1 = scalar_m(sum_m(delta), 1/batch_size);
 
        	updateParameters(d_inputweights, d_w1, dbias1, dbias2); 
     }
 
     void NN::updateParameters(const std::vector<double> &d_inputweights, const std::vector<double> &d_w1, double dbias1, double dbias2)
     {
-        for(int i = 0;i<wi.size();i++)
+        for(int i = 0;i<wi.columns();i++)
         {
-            wi[i] = wi[i] - learningrate * d_inputweights[i];
+		for(int j = 0;j<wi.rows();j++)
+		{
+			wi.m[i][j] = wi.m[i][j] - learningrate * d_inputweights.m[i][j];
         }
-        for(int i = 0;i<w1.size();i++)
+        for(int i = 0;i<w1.columns();i++)
         {
-            w1[i] = w1[i] - learningrate * d_w1[i];
+		for(int j = 0;j<w1.rows();j++)
+		{
+			w1.m[i][j] = w1.m[i][j] - learningrate * d_w1.m[i][j];
         }
-        for(int i = 0;i<bias1.size();i++)
+        for(int i = 0;i<bias1.columns();i++)
         {
-		            bias1[i] -= learningrate * dbias1;
+		bias1.m[0][i] -= learningrate * dbias1.m[0][i];
         }
-	std::cout <<"dbias1: " << dbias1 << " dbias2: " << dbias2 << std::endl;
-		std::cin.get();
-
-        for(int i = 0;i<bias2.size();i++)
+	
+	for(int i = 0;i<bias2.columns();i++)
         {
-            bias2[i] -= learningrate * dbias2;
+		bias2.m[0][i] -= learningrate * dbias2.m[0][i];
         }
     }
 

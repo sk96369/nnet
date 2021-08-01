@@ -82,20 +82,19 @@ namespace MM
 	template <typename A, typename B>
 	std::vector<double> hadamard(const mat<A> &left, const mat<B> &right)
 	{
-		std::vector<double> product;
-		std::vector<double> left_values = left.getVector();
-		std::vector<double> right_values = right.getVector();
-		if(left_values.size() == right_values.size())
+		if(left.rows() == right.rows() && left.columns() == right.columns())
 		{
-			int size = left_values.size();
-			for(int i = 0;i<size;i++)
+			mat<double> product(left);
+			for(int i = 0;i<y_s;i++)
 			{
-				product.push_back(left_values[i] * right_values[i]);
+				for(int j = 0;j<x_s;j++)
+				{
+					product.m[i][j] *= (double)right.m[i][j];
 			}
 			return product;
 		}
 		std::cout << "Incorrect vector sizes, returning an empty vector...\n";
-		return product;
+		return mat<double> empty(0, 0, 0);
 	}
 
 	mat(double a, double b, int x, int y) : x_s(x), y_s(y)
@@ -189,7 +188,14 @@ namespace MM
 		return vec;
 	}
 
-	void softmax(mat<double> &in)
+	template<typename A>
+	mat<double> getSoftmax(mat<A> in)
+	{
+		return in.softmax();
+	}
+
+
+	void mat::softmax()
 	{
 		for(auto& in_row : in)
 		{
@@ -232,9 +238,14 @@ namespace MM
 		return false;
 	}
 
-	void relu(matrix<double> &in)
+	mat<double> getRelu(mat<double> in)
 	{
-		for(auto& i : in)
+		return in.relu();
+	}
+
+	void mat::relu()
+	{
+		for(auto& i : m)
 		{
 			for(auto& j : i)
 			{
@@ -244,7 +255,7 @@ namespace MM
 		}
 	}
 
-	mat<int> drelu(matrix<double> &matrix)
+	mat<int> drelu(mat<double> &matrix)
 	{
 		mat<int> derivatives(matrix);
 		for(auto& i : vec)

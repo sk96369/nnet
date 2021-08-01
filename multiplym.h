@@ -12,29 +12,31 @@ namespace MM
         // Input
         matrix<int> input;
         // Hidden layers
-        matrix<double> h1;
+        mat<double> h1;
+	mat<double> relu_h1;
+	mat<double> h2;
         // Output
-        matrix<double> out;
+        mat<double> out;
         //Biases for the first hidden layer and the output layer respectively
-        matrix<double> bias1;
-        matrix<double> bias2;
+        mat<double> bias1;
+        mat<double> bias2;
         //Learning rate
         double learningrate;
 
         //The weight "matrices", saved as 1-D vectors
-        matrix<double> wi;
-        matrix<double> w1;
+        mat<double> wi;
+        mat<double> w1;
 
         //Forward propagation function
-        void fprop(const matrix<int> &in);
+        void fprop(const mat<int> &in);
         //Backpropagation function. Takes target output as its parameter
-        void bprop(const matrix<int> &targetoutput);
+        void bprop(const mat<int> &targetoutput);
 
 	//Forward propagation function without parameters
 	void fprop();
 
         //Function for updating the parameters
-        void updateParameters(const std::vector<double> &dih1w, const std::vector<double> &dh1outw, double dbias1, double dbias2);
+        void updateParameters(const mat<double> &dih1w, const mat<double> &dh1outw, const mat<double> dbias1, const mat<double> dbias2);
 
         public:
  
