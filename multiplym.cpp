@@ -1,4 +1,3 @@
-#include "multiplym.h"
 #include <sstream>
 #include <vector>
 #include <fstream>
@@ -10,8 +9,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <tuple>
-#include "onehot.cpp"
+#include "onehot.h"
 #include <float.h>
+#include "multiplym.h"
 #include "mm_math.h"
 
 //multiplym.cpp
@@ -73,20 +73,26 @@ namespace MM
 
 */
 
-	template<typename A>
-	NN::NN(mat<A> in, int h1size, int outsize, int batch_size) 
+	NN::NN(const mat<int> &in, int h1size, int outsize, int batch_size) : input(in),  h1(0.0, batch_size, h1size), relu_h1(0.0, batch_size, h1size), bias1(0.01, 10, 1), bias2(0.01, 10, 1), out(0.0, outsize, batch_size), h2(0.0, outsize, batch_size), wi(-0.5, 0.5, 784, 10), w1(-0.5, 0.5, 10, 10), learningrate(0.9)
 	{
-	
+/*	
+		std::cout << "TEST1\n";
 		input = in;
-		h1 = mat<double>(0.0, batch_size, h1size);
-		relu_h1 = mat<double>(h1);
-		bias1 = mat<double>(0.01, 10, 1);
-		bias2 = mat<double>(0.01, 10, 1);
-		out = mat<double>(0.0, outsize, batch_size);
-		h2 = mat<double>(out);
-		wi = mat<double>(-0.5, 0.5, 10, 10);
-		w1 = mat<double>(-0.5, 0.5, 10, 10);
-        	learningrate = 0.08;
+		h1(0.0, batch_size, h1size);
+		relu_h1(h1);
+		bias1(0.01, 10, 1);
+		std::cout << "TEST5\n";
+		bias2(0.01, 10, 1);
+		std::cout << "TEST6\n";
+		out(0.0, outsize, batch_size);
+		std::cout << "TEST7\n";
+		h2(out);
+		std::cout << h2.m.size() << " " << h2.rows() << " " << h2.m[0].size() << " " << h2.columns() << " " << out.m.size() << " " << out.m[0].size() << " " << out.rows() << " " << out.columns() << "TEST8\n";
+		wi(-0.5, 0.5, 784, 10);
+		std::cout << "TEST9\n";
+		w1(-0.5, 0.5, 10, 10);
+		std::cout << "TEST10\n";
+        	learningrate = 0.08;*/
 	}
 
     
@@ -94,7 +100,7 @@ namespace MM
     void NN::fprop()
     {
         //Multiply the input layer with the weights between the input and h1 layers
-	mat<int> transposed = input.transpose();
+	mat<int> transposed = getTranspose(input);
 	h1 = mm(wi, transposed);
 	//Add the bias to each of the hidden states	
 	add(h1, bias1);
@@ -119,35 +125,35 @@ namespace MM
         //Calculate the adjustments needed for the weights and biases of the first layer
 	mat<double>delta2 = hadamard(mm(w1,getTranspose(delta)), drelu(h1)); 
 
-        mat<double>d_inputweights = scalar_m(mm(input, getTranspose(delta2)), 1/batch_size);
+	mat<double>d_inputweights = scalar_m(mm(delta2, input), 1/batch_size);
 
         mat<double>dbias1 = scalar_m(sum_m(delta), 1/batch_size);
 
        	updateParameters(d_inputweights, d_w1, dbias1, dbias2); 
-    }
+	}
 
     void NN::updateParameters(const mat<double> &d_inputweights, const mat<double> &d_w1, mat<double> dbias1, mat<double> dbias2)
     {
-        for(int i = 0;i<wi.columns();i++)
+        for(int i = 0;i<wi.rows();i++)
         {
-		for(int j = 0;j<wi.rows();j++)
+		for(int j = 0;j<wi.columns();j++)
 		{
 			wi.m[i][j] = wi.m[i][j] - learningrate * d_inputweights.m[i][j];
 		}
         }
-        for(int i = 0;i<w1.columns();i++)
+        for(int i = 0;i<w1.rows();i++)
         {
-		for(int j = 0;j<w1.rows();j++)
+		for(int j = 0;j<w1.columns();j++)
 		{
 			w1.m[i][j] = w1.m[i][j] - learningrate * d_w1.m[i][j];
 		}
         }
-        for(int i = 0;i<bias1.columns();i++)
+        for(int i = 0;i<bias1.rows();i++)
         {
 		bias1.m[0][i] -= learningrate * dbias1.m[0][i];
         }
 	
-	for(int i = 0;i<bias2.columns();i++)
+	for(int i = 0;i<bias2.rows();i++)
         {
 		bias2.m[0][i] -= learningrate * dbias2.m[0][i];
         }
@@ -229,5 +235,20 @@ namespace MM
 	    return onehot_toInt(out);
     }
 
+    void NN::setInput(const std::vector<int> &vec, int x, int y)
+    {
+	    int j = 0;
+	    int k = 0;
+	    for(int i = 0;i < vec.size();i++)
+	    {
+		    input.m[j][k] = vec[i];
+		    if(k == x)
+		    {
+			    k = 0;
+			    j++;
+		    }
+	    }
+    }
+	
 
 }

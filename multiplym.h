@@ -43,10 +43,9 @@ namespace MM
  
 	//Function for setting inputs. Returns false if the input vector is of wrong size,
 	//true otherwise.
-//	bool setInput(const std::vector<int> &in);      
+	void setInput(const std::vector<int> &vec, int x, int y);      
 //	NN(int inputsize, int h1size, int outsize, std::string filename);
-	template<typename A>
-        NN(mat<A> in, int h1size, int outsize, int batch_size);
+        NN(const mat<int> &in, int h1size, int outsize, int batch_size);
         //Training function
         void train(std::vector<int> labelmatrix, int batch_size, int epoch);
         //Function that saves the trained parameters and chosen hyperparameters onto disk

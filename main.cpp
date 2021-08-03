@@ -1,12 +1,13 @@
 #include "zlib.h"
-#include "multiplym.h"
+#include "onehot.h"
 #include <fstream>
 #include <iostream>
 #include <string>
 #include "gzreader.cpp"
-#include "mm_math.h"
+#include "multiplym.h"
 
-const int batchsize = 60000;
+const int datasize = 60000;
+const int batchsize = 1000;
 const int epoch = 1;
 
 //Main.cpp
@@ -57,13 +58,35 @@ int main(int argc, char* argv[])
 	{
 		std::vector<int> labels = readmnistgz(trainingdata_filename);
 		std::vector<int> images = readmnistgz(trainingdata2_filename);
-		MM::mat<int> imagematrix(images, 784, 60000);
 
-	
+		std::vector<int> labels_batch;
+		std::vector<int> images_batch;
+		int iterations = datasize/batchsize;
+		
+		MM::mat<int> imagematrix(0, 784, batchsize);
 		MM::NN network(imagematrix, 10, 10, batchsize);
+		std::cout << imagematrix.m.size() << " " << imagematrix.m[0].size() << std::endl;
+
+		for(int n = 0;n <= iterations;n++)
+		{
+			for(int i = 0;i < batchsize;i++)
+			{
+				labels_batch.push_back(labels[n*batchsize + i]);
+			}
+			for(int i = 0;i < batchsize;i++)
+			{
+				for(int j = 0;j<784;j++)
+				{
+					images_batch.push_back(images[n*batchsize + i*784 + j]);
+				}
+			}
+			std::cout << images_batch.size() << std::endl;
+			network.setInput(images_batch, 784, batchsize);
 	
-		network.train(labels, batchsize, epoch);
-	
+			network.train(labels_batch, batchsize, epoch);
+			labels_batch.clear();
+			images_batch.clear();
+		}	
 		network.saveModel(argv[2]);
 	}
 		
