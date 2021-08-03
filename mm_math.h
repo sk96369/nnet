@@ -48,6 +48,9 @@ namespace MM
 		//Applies the relu function
 		void relu();
 
+		//toString implementation
+		std::string toString();
+
 		//Assignment operator
 		const mat & operator=(const mat& matrix);
 	};
@@ -359,11 +362,6 @@ namespace MM
 				error.m[j][i] = left.m[j][i] - right.m[j][i];
 			}
 		}
-		for(int i = 0; i < error.rows();i++)
-		{
-			int onehot_int = onehot_toInt(error.m[i]);
-			std::cout << onehot_int << std::endl;
-		}
 		return error;
 	}
 
@@ -410,6 +408,22 @@ namespace MM
 				
 			}
 		}
+	}
+
+	template<typename B>
+	std::string mat<B>::toString()
+	{
+		std::string str = "";
+		for(auto& i : m)
+		{
+			for(auto& j : i)
+			{
+				str.append((std::string)j + "/");
+			}
+			str.pop_back();
+			str.append("\n");
+		}
+		return str;
 	}
 
 	//Function that adds the values of the vector on the right, to each row of left

@@ -84,6 +84,7 @@ int main(int argc, char* argv[])
 			network.setInput(images_batch, 784, batchsize);
 	
 			network.train(labels_batch, batchsize, epoch);
+			std::cout << network.toString();
 			labels_batch.clear();
 			images_batch.clear();
 		}	

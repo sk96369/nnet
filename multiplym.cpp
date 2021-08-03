@@ -14,6 +14,8 @@
 #include "multiplym.h"
 #include "mm_math.h"
 
+#define IMAGEWIDTH 28
+
 //multiplym.cpp
 namespace MM
 {
@@ -249,6 +251,30 @@ namespace MM
 		    }
 	    }
     }
-	
 
+    std::string NN::toString()
+    {
+	    std::string str = "";
+	    std::vector<int> intlist = onehot_toInt(out);
+	    for(int i = 0;i<out.rows();i++)
+	    {
+		for(int j = 0;j<input.columns();j++)
+		{
+			int k = 0;
+			if(input.m[i][j] == 0)
+				str.append(" ");
+			else
+				str.append("#");
+			k++;
+			if(k == IMAGEWIDTH)
+			{
+				k = 0;
+				str.append("\n");
+			}
+
+		}
+		str += intlist[i] + "\n";
+	    }
+	return str;
+    }
 }

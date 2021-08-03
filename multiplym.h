@@ -52,5 +52,8 @@ namespace MM
 	bool saveModel(std::string filename) const;
 	//Function that makes a prediction based on the given inputs
 	std::vector<int> predict(const mat<int> &in);
+
+	//toString implementation
+	std::string toString();
     };
 }

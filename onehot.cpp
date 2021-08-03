@@ -1,5 +1,6 @@
 #include <vector>
 #include "onehot.h"
+#include "mm_math.h"
 
 //Constructs a one-hot-vector from 0 to max of size max+1, where max is the highest
 //possible integer being encoded and i is the number being encoded
