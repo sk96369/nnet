@@ -1,8 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <list>
-#include "mm_math.h"
 
 //multiplym.h
 namespace MM
@@ -47,11 +45,11 @@ namespace MM
 //	NN(int inputsize, int h1size, int outsize, std::string filename);
         NN(const mat<int> &in, int h1size, int outsize, int batch_size);
         //Training function
-        void train(std::vector<int> labelmatrix, int batch_size, int epoch);
+        void train(std::vector<int> labels, int batch_size, int epoch);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
 	bool saveModel(std::string filename) const;
 	//Function that makes a prediction based on the given inputs
-	std::vector<int> predict(const mat<int> &in);
+	void predict(const mat<int> &in);
 
 	//toString implementation
 	std::string toString();

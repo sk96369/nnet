@@ -1,10 +1,8 @@
-#include "zlib.h"
-#include "onehot.h"
 #include <fstream>
 #include <iostream>
 #include <string>
 #include "gzreader.cpp"
-#include "multiplym.h"
+#include "headers.h"
 
 const int datasize = 60000;
 const int batchsize = 1000;

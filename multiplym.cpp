@@ -1,21 +1,34 @@
-#include <sstream>
 #include <vector>
 #include <fstream>
-#include <iterator>
 #include <stdlib.h>
 #include <iostream>
 #include <math.h>
-#include <list>
-#include <errno.h>
 #include <stdio.h>
 #include <tuple>
-#include "onehot.h"
 #include <float.h>
-#include "multiplym.h"
-#include "mm_math.h"
-
+#include "headers.h"
+#include "onehot.h"
 #define IMAGEWIDTH 28
 
+std::vector<int> onehot_toInt(const MM::mat<double> &oh)
+{
+	int columns = oh.columns();
+	int rows = oh.rows();
+	std::vector<int> outputs_as_integers;
+	for(int i = 0;i<rows;i++)
+	{
+		int max = 0;
+		for(int j = 0;j<columns;j++)
+		{
+			if(oh.m[i][j] > oh.m[i][max])
+			{
+				max = j;
+			}
+		}
+		outputs_as_integers.push_back(max);
+	}
+	return outputs_as_integers;
+}
 //multiplym.cpp
 namespace MM
 {
@@ -119,6 +132,7 @@ namespace MM
 	int batch_size = targetoutput.rows();
 
         //Calculate the difference between target and generated output
+	std::cout << "TEST\n";
 	mat<double>delta = getError(targetoutput, out);
         //Calculate the adjustments needed for the weights and biases of the second layer
 	mat<double> d_w1 = scalar_m(mm(h1, delta), 1/batch_size);
@@ -172,7 +186,6 @@ namespace MM
 		{
         		fprop();
 			mat<int> oh_labels = int_toOneHot(labels, 10);
-
 			bprop(oh_labels);
 		}
 //			std::cin.get();
@@ -228,14 +241,12 @@ namespace MM
 	return 1;
     }
 
-    std::vector<int> NN::predict(const mat<int> &in)
-    {
-	    input = in;
-	    std::cout << "TEST2\n";
-	    fprop();
-	    std::cout << "TEST3\n";
-	    return onehot_toInt(out);
-    }
+	void NN::predict(const mat<int> &in)
+	{
+		input = in;
+		std::cout << "TEST2\n";
+		fprop();
+	}
 
     void NN::setInput(const std::vector<int> &vec, int x, int y)
     {

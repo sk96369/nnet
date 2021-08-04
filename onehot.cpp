@@ -1,6 +1,5 @@
 #include <vector>
-#include "onehot.h"
-#include "mm_math.h"
+#include "headers.h"
 
 //Constructs a one-hot-vector from 0 to max of size max+1, where max is the highest
 //possible integer being encoded and i is the number being encoded
@@ -24,7 +23,7 @@ MM::mat<int> int_toOneHot(std::vector<int> &in, int max)
 	}
 	return onehot;
 }
-int onehot_toInt(const std::vector<double> &oh)
+int single_onehot_toInt(const std::vector<double> &oh)
 {
 	int size = oh.size();
 	int max = 0;
@@ -36,7 +35,7 @@ int onehot_toInt(const std::vector<double> &oh)
 	return max;
 }
 
-int onehot_toInt(const std::vector<int> &oh)
+int single_onehot_toInt(const std::vector<int> &oh)
 {
 	int size = oh.size();
 	int max = 0;
@@ -48,7 +47,7 @@ int onehot_toInt(const std::vector<int> &oh)
 	return max;
 }
 
-std::vector<int> onehot_toInt(const MM::mat<double> &oh)
+/*std::vector<int> onehot_toInt(const MM::mat<double> &oh)
 {
 	int columns = oh.columns();
 	int rows = oh.rows();
@@ -58,12 +57,12 @@ std::vector<int> onehot_toInt(const MM::mat<double> &oh)
 		int max = 0;
 		for(int j = 0;j<columns;j++)
 		{
-			if(oh.m[i][j] > max)
+			if(oh.m[i][j] > oh.m[i][max])
 			{
-				max = oh.m[i][j];
+				max = j;
 			}
 		}
 		outputs_as_integers.push_back(max);
 	}
 	return outputs_as_integers;
-}
+}*/

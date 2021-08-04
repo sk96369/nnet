@@ -5,7 +5,6 @@
 #include <random>
 #include <vector>
 #include <math.h>
-#include "onehot.h"
 
 namespace MM
 {
@@ -348,12 +347,13 @@ namespace MM
 	template<typename A, typename B>
 	mat<double> getError(const mat<A> &left, const mat<B> &right)
 	{
+		std::cout << left.m.size() << right.m.size() << std::endl;
 		if(left.columns() != right.columns() && left.rows() != right.rows())
 		{
 			std::cout << "Dimension error in getError()\n";
 		}
 		mat<double> error((double) 0.0, left.columns(), left.rows());
-//		std::cout << error.m[0].size() << " " << error.m.size() << "\nleft(col, row): " << left.m[0].size() << " " << left.m.size() << "\nright(col, row): " << right.m[0].size() << " " << right.m.size() << std::endl;
+		std::cout << error.m[0].size() << " " << error.m.size() << "\nleft(col, row): " << left.m[0].size() << " " << left.m.size() << "\nright(col, row): " << right.m[0].size() << " " << right.m.size() << std::endl;
 		for(int i = 0;i<error.columns();i++)
 		{
 			for(int j = 0;j<error.rows();j++)

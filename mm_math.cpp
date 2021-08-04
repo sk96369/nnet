@@ -1,8 +1,8 @@
-#include "mm_math.h"
 #include <iostream>
 #include <vector>
 #include <type_traits>
 #include <random>
+#include "headers.h"
 
 namespace MM
 {
@@ -24,6 +24,7 @@ namespace MM
 		std::cout << "Addition error!\n";
 		return false;
 	}
+
 	mat<double> getRelu(mat<double> in)
 	{
 		in.relu();
