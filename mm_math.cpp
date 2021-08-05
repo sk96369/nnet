@@ -1,8 +1,8 @@
+/* 
 #include <iostream>
 #include <vector>
 #include <type_traits>
 #include <random>
-#include "headers.h"
 
 namespace MM
 {
@@ -25,9 +25,15 @@ namespace MM
 		return false;
 	}
 
+	template<typename B>
+	mat<B>::mat() : x_s(0), y_s(0), m(std::vector<std::vector<B>>(0))
+	{
+	}
+
 	mat<double> getRelu(mat<double> in)
 	{
 		in.relu();
 		return in;
 	}
 }
+*/

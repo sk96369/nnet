@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MM_MATH_H
+#define MM_MATH_H
 
 #include <iostream>
 #include <type_traits>
@@ -37,6 +38,9 @@ namespace MM
 		mat(double a, double b, int x, int y);
 		//Copy constructor
 		mat(const mat &o);
+
+		//Function for setting new values for the matrix based on the given vector
+		void newValues(const std::vector<A> &vec, int x, int y);
 
 		/* member functions */
 		//Matrix transpose
@@ -172,7 +176,7 @@ namespace MM
 		m = std::vector<std::vector<B>>(y);
 		for(int i = 0;i < y;i++)
 		{
-			m[i] = std::vector<B>(x, (B)0);
+			m[i] = std::vector<B>(x, b);
 		}
 	}
 
@@ -183,18 +187,21 @@ namespace MM
 		int j = 0;
 		int k = 0;
 		for(auto& i : m)
+		{
+//			std::cout << "TEseast\n";
 			i = std::vector<B>(x);
+		}
 		for(int i = 0;i < y;i++)
 		{
 			k++;
-			std::cout << m[i].size() << " " << k << std::endl;
+//			std::cout << m[i].size() << " " << k << std::endl;
 		}
 		k = 0;
-		std::cout << y*x << std::endl;
+//		std::cout << y*x << std::endl;
 		for(int i = 0;i < y*x;i++)
 		{
-			//std::cout << m.size() << " " << m[j].size() << " " << i << std::endl;
-			m[j][k] = vec[i];
+//			std::cout << m.size() << " " << m[j].size() << " " << i << std::endl;
+			m[k][j] = vec[i];
 			j++;
 			if(j == x)
 			{
@@ -221,12 +228,6 @@ namespace MM
 		std::cout << rows() << " " << columns() << std::endl;
 	}
 */
-	template<typename A>
-	mat<A>::mat() : x_s(0), y_s(0), m(std::vector<std::vector<A>>(0))
-	{
-	}
-
-
 	template<typename B>
 	void mat<B>::transpose()
 	{
@@ -347,13 +348,13 @@ namespace MM
 	template<typename A, typename B>
 	mat<double> getError(const mat<A> &left, const mat<B> &right)
 	{
-		std::cout << left.m.size() << right.m.size() << std::endl;
+//		std::cout << left.m.size() << right.m.size() << std::endl;
 		if(left.columns() != right.columns() && left.rows() != right.rows())
 		{
 			std::cout << "Dimension error in getError()\n";
 		}
 		mat<double> error((double) 0.0, left.columns(), left.rows());
-		std::cout << error.m[0].size() << " " << error.m.size() << "\nleft(col, row): " << left.m[0].size() << " " << left.m.size() << "\nright(col, row): " << right.m[0].size() << " " << right.m.size() << std::endl;
+//		std::cout << error.m[0].size() << " " << error.m.size() << "\nleft(col, row): " << left.m[0].size() << " " << left.m.size() << "\nright(col, row): " << right.m[0].size() << " " << right.m.size() << std::endl;
 		for(int i = 0;i<error.columns();i++)
 		{
 			for(int j = 0;j<error.rows();j++)
@@ -418,7 +419,8 @@ namespace MM
 		{
 			for(auto& j : i)
 			{
-				str.append((std::string)j + "/");
+				str += std::to_string(j);
+				str += "/";
 			}
 			str.pop_back();
 			str.append("\n");
@@ -426,8 +428,64 @@ namespace MM
 		return str;
 	}
 
-	//Function that adds the values of the vector on the right, to each row of left
-	bool add(mat<double> &left, mat<double> right);
-	//Function that calls the relu function on in	
-	mat<double> getRelu(mat<double> in);
+	template<typename A, typename B>
+	bool add(mat<A> &left, mat<B> right)
+	{
+		std::vector<B> vec = right.getVector();
+		int vec_size = vec.size();
+		if(vec_size == left.rows());
+		{
+			for(int i = 0;i<left.columns();i++)
+			{
+				for(int j = 0;j<left.rows();j++)
+				{
+					left.m[j][i] += vec[j];
+				}
+			}
+			return true;
+		}
+		std::cout << "Addition error!\n";
+		return false;
+	}
+
+	template<typename B>
+	mat<B>::mat() : x_s(0), y_s(0), m(std::vector<std::vector<B>>(0))
+	{
+	}
+
+	template<typename B>
+	mat<B> getRelu(mat<B> in)
+	{
+		in.relu();
+		return in;
+	}
+	
+	template<typename B>
+	void mat<B>::newValues(const std::vector<B> &vec, int x, int y)
+	{
+		x_s = x;
+		y_s = y;
+		m.clear();
+		m = std::vector<std::vector<B>>(y);
+		int j = 0;
+		int k = 0;
+		for(auto& i : m)
+		{
+			i = std::vector<B>(x);
+		}
+		for(int i = 0;i < y*x;i++)
+		{
+//			std::cout << m.size() << " " << m[j].size() << " " << i << std::endl;
+			m[k][j] = vec[i];
+			j++;
+			if(j == x)
+			{
+				j = 0;
+				k++;
+			}
+		}
+	}
+		
 }
+
+#endif

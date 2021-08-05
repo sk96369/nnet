@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MULTIPLYM_H
+#define MULTIPLYM_H
+
 #include <string>
 #include <vector>
 
@@ -6,7 +8,7 @@
 namespace MM
 {
 
-    class NN
+    class nnet
     {
         // Input
         mat<int> input;
@@ -42,8 +44,9 @@ namespace MM
 	//Function for setting inputs. Returns false if the input vector is of wrong size,
 	//true otherwise.
 	void setInput(const std::vector<int> &vec, int x, int y);      
-//	NN(int inputsize, int h1size, int outsize, std::string filename);
-        NN(const mat<int> &in, int h1size, int outsize, int batch_size);
+	void setInput(const mat<int> &in);
+//	nnet(int inputsize, int h1size, int outsize, std::string filename);
+        nnet(const mat<int> &in, int h1size, int outsize, int batch_size);
         //Training function
         void train(std::vector<int> labels, int batch_size, int epoch);
         //Function that saves the trained parameters and chosen hyperparameters onto disk
@@ -55,3 +58,5 @@ namespace MM
 	std::string toString();
     };
 }
+
+#endif

@@ -6,15 +6,18 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <sstream>
 #include <vector>
+#include "gzreader.h"
 
 using namespace std;
 
 
 //Function for reading the MNIST training data, and returning it in a vector
-vector<int> readmnistgz(string filename, string extension = ".gz")
+vector<int> readmnistgz(string filename, string extension)
 {
 	std::vector<int> inint;
 	filename.append(extension);
+	int numberofitems;
+	int sizeofitems = 1;
 
 	//Read from the file with the name given as the first parameter
 	ifstream file(filename, ios_base::in | ios_base::binary);
@@ -29,7 +32,7 @@ vector<int> readmnistgz(string filename, string extension = ".gz")
 	char nextchar;
 
 	//Get the first 64 bits of data from the stream
-	char intsizechar[4];
+	std::string intsizechar(4, 0);
 
 	cout << "Magic number: " ;
 	for(size_t i = 0;i<sizeof(int);i++)
@@ -58,11 +61,14 @@ vector<int> readmnistgz(string filename, string extension = ".gz")
 				| (int)(((unsigned char)intsizechar[2]) << 8)
 				| (int)(((unsigned char)intsizechar[3]));
 		
+		numberofitems = nextint;
+
 		std::cout << nextint << std::endl;
 	}
 	//Assume we are processing the training images data
 	else
 	{
+		sizeofitems = 784;
 		cout << "Number of images: " ;
 		for(size_t i = 0;i<sizeof(int);i++)
 		{
@@ -74,6 +80,8 @@ vector<int> readmnistgz(string filename, string extension = ".gz")
 				| (int)(((unsigned char)intsizechar[2]) << 8)
 				| (int)(((unsigned char)intsizechar[3]));
 		
+		numberofitems = nextint;
+
 		std::cout << nextint << std::endl;
 
 		cout << "Number of rows: " ;
@@ -102,11 +110,13 @@ vector<int> readmnistgz(string filename, string extension = ".gz")
 		
 		std::cout << nextint << std::endl;
 	}
-	while(instream.get(nextchar))
+	unsigned char* buffer = new unsigned char[numberofitems*sizeofitems];
+	instream.read((char*)buffer, numberofitems*sizeofitems); 
+	for(int i = 0;i<numberofitems*sizeofitems;i++)
 	{
-		nextint = (int)nextchar;
-		inint.push_back(nextint);
+		inint.push_back(static_cast<int>(buffer[i]));
 	}
+	delete[] buffer;
     	//Cleanup
     	file.close();
 	return inint;

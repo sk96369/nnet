@@ -7,7 +7,7 @@
 #include "multiplym.h"
 
 const int datasize = 60000;
-const int batchsize = 500;
+const int batchsize = 1000;
 const int epoch = 1;
 
 //Main.cpp
@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
             std::cout << "Incorrect number of arguments";
             exit(1);
         }
-	//MM::nnet network(784, 10, 10, argv[2]);
+	//MM::NN network(784, 10, 10, argv[2]);
 	std::string str;
 	std::cout << "Type in the filename to make predictions on\n";
 	std::cin >> str;
@@ -58,41 +58,33 @@ int main(int argc, char* argv[])
 	{
 		std::vector<int> labels = readmnistgz(trainingdata_filename);
 		std::vector<int> images = readmnistgz(trainingdata2_filename);
+
 		std::vector<int> labels_batch;
 		std::vector<int> images_batch;
-		MM::mat<int>imagematrix(9, 784, batchsize);
-
-		MM::nnet network(imagematrix, 10, 10, batchsize);
 		int iterations = datasize/batchsize;
-	//	for(auto& i : images)
-	//		std::cout << i << " " << (unsigned int)i << " ";
 		
 		for(int n = 0;n <= iterations;n++)
 		{
-	//		std::cout << "LABELTEST\n";
 			for(int i = 0;i < batchsize;i++)
 			{
 				labels_batch.push_back(labels[n*batchsize + i]);
 			}
-	//		std::cout << "\n\nimagetest\n";
 			for(int i = 0;i < batchsize;i++)
 			{
 				for(int j = 0;j<784;j++)
 				{
 					images_batch.push_back(images[n*batchsize + i*784 + j]);
 				}
-	//			std::cout << std::endl;
 			}
 
-			imagematrix.newValues(images_batch, 784, batchsize);
-			
-//			std::cout << imagematrix.toString();
+			MM::mat<int> imagematrix(labels_batch, 784, batchsize);
+			MM::NN network(imagematrix, 10, 10, batchsize);
 
-	//		std::cout << "TESSSSST" << images_batch.size() << std::endl;
+			std::cout << images_batch.size() << std::endl;
 			network.setInput(images_batch, 784, batchsize);
 	
 			network.train(labels_batch, batchsize, epoch);
-		//	std::cout << network.toString();
+			std::cout << network.toString();
 			labels_batch.clear();
 			images_batch.clear();
 		}	

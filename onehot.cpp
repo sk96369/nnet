@@ -10,19 +10,7 @@ std::vector<int> int_toOneHot(int i, int max)
 	return vec;
 }
 
-//List of integers into a one-hot-encoded matrix
-MM::mat<int> int_toOneHot(std::vector<int> &in, int max)
-{
-	int rows = in.size();
-	//Creates a new matrix with all the elements set to 0
-	MM::mat<int> onehot((int)0, max, rows);
-	for(int i = 0;i<rows;i++)
-	{
-		//Sets the element at in[i] to 1
-		onehot.m[i][in[i]] = 1;
-	}
-	return onehot;
-}
+
 int single_onehot_toInt(const std::vector<double> &oh)
 {
 	int size = oh.size();
@@ -47,7 +35,7 @@ int single_onehot_toInt(const std::vector<int> &oh)
 	return max;
 }
 
-/*std::vector<int> onehot_toInt(const MM::mat<double> &oh)
+std::vector<int> onehot_toInt(const MM::mat<double> &oh)
 {
 	int columns = oh.columns();
 	int rows = oh.rows();
@@ -65,4 +53,5 @@ int single_onehot_toInt(const std::vector<int> &oh)
 		outputs_as_integers.push_back(max);
 	}
 	return outputs_as_integers;
-}*/
+}
+
