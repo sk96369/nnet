@@ -7,7 +7,7 @@
 #include "multiplym.h"
 
 const int datasize = 60000;
-const int batchsize = 500;
+const int batchsize = 10;
 const int epoch = 1;
 
 //Main.cpp
@@ -64,35 +64,27 @@ int main(int argc, char* argv[])
 
 		MM::nnet network(imagematrix, 10, 10, batchsize);
 		int iterations = datasize/batchsize;
-	//	for(auto& i : images)
-	//		std::cout << i << " " << (unsigned int)i << " ";
 		
 		for(int n = 0;n <= iterations;n++)
 		{
-	//		std::cout << "LABELTEST\n";
 			for(int i = 0;i < batchsize;i++)
 			{
 				labels_batch.push_back(labels[n*batchsize + i]);
 			}
-	//		std::cout << "\n\nimagetest\n";
 			for(int i = 0;i < batchsize;i++)
 			{
 				for(int j = 0;j<784;j++)
 				{
 					images_batch.push_back(images[n*batchsize + i*784 + j]);
 				}
-	//			std::cout << std::endl;
 			}
 
 			imagematrix.newValues(images_batch, 784, batchsize);
 			
-//			std::cout << imagematrix.toString();
 
-	//		std::cout << "TESSSSST" << images_batch.size() << std::endl;
 			network.setInput(images_batch, 784, batchsize);
 	
 			network.train(labels_batch, batchsize, epoch);
-		//	std::cout << network.toString();
 			labels_batch.clear();
 			images_batch.clear();
 		}	

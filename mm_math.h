@@ -41,6 +41,7 @@ namespace MM
 
 		//Function for setting new values for the matrix based on the given vector
 		void newValues(const std::vector<A> &vec, int x, int y);
+		void newValues(const mat<A> &original);
 
 		/* member functions */
 		//Matrix transpose
@@ -58,58 +59,6 @@ namespace MM
 		const mat & operator=(const mat& matrix);
 	};
 
-/*	Matrix operations 
-	//Matrix multiplication
-	template <typename A, typename B>
-	mat<double> mm(mat<A> left, mat<B> right);
-
-	//Dot product
-	template <typename A, typename B>
-	double dot(mat<A> left, mat<B> right);
-
-	//Hadamard product
-	template <typename A, typename B>
-	mat<double> hadamard(mat<A> left, mat<B> right);
-
-	//Softmax function. Modifies in directly.
-	void softmax(mat<double> &in);
-	//Softmax function that creates a new matrix and returns it
-	template<typename A>
-	mat<double> getSoftmax(mat<A> in);
-
-	//Addition function. Requires the matrix on the right to be a vector and have the same
-	//number of elements as left has columns. Modifies left directly, and returns true on
-	//success, false on failure.
-	bool add(mat<double> &left, mat<double> right);
-
-	//ReLU function. Inserts a 0 on every element under 0 in the in-matrix
-	void relu(mat<double> &in);
-	//ReLU function that returns a new matrix
-	mat<double> getRelu(mat<double> in);
-	//ReLU derivation function. Returns a matrix including a 0 for each value under 0 in the
-	//input matrix, and 1 for each value over 0
-	mat<int> drelu(mat<double> &matrix);
-
-	//Calculates the difference between two matrixes
-	template<typename A, typename B>
-	mat<double> getError(const mat<A> &left, const mat<B> &right);
-
-	//Creates a new matrix, that is a transpose of the reference given as argument
-	template<typename A>
-	mat<double> getTranspose(const mat<A> &original);
-
-	//Returns a new matrix, with each elements being an element of the original multiplied
-	//by the scalar
-	template<typename A>
-	mat<A> scalar_m(mat<A> original, double scalar);
-
-	//Creates a vector, so that each element is the sum of each column of the original matrix
-	template<typename A>
-	mat<A> sum_m(mat<A> &original);
-*/
-	/*--------------------------------------------------*/
-	/*-----Class definitions for template functions-----*/
-	/*--------------------------------------------------*/
 	template <typename A, typename B>
 	mat<double> mm(const mat<A> &left, const mat<B> &right)
 	{
@@ -118,7 +67,7 @@ namespace MM
 			std::cout << "matrix dimension error\nLeft(column row): " << left.columns() << " " << left.rows() << "\nRight(column row): " << right.columns() << " " << right.rows() << std::endl;
 			return mat<double>(0, 0, 0.0);
 		}
-
+		
 		mat<double> newmatrix((double)0.0, right.columns(), left.rows());
 		for(int i = 0;i<newmatrix.rows();i++)
 		{
@@ -126,10 +75,21 @@ namespace MM
 			{
 				for(int k = 0;k < left.columns();k++)
 				{
-					newmatrix.m[i][j] += left.m[i][k] * right.m[k][j];
+					newmatrix.m[i][j] += (double)left.m[i][k] * (double)right.m[k][j];
+			//		std::cout << newmatrix.m[i][j] << " ";     //TESTOUTPUT
 				}
+				
 			}
 		}
+/*		for(int i = 0;i<newmatrix.columns();i++)
+		{
+			for(int j = 0;j<newmatrix.rows();j++)
+			{
+				std::cout << newmatrix.m[j][i] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cin.get(); 						TESTOUTPUT*/ 
 		return newmatrix;
 	}
 
@@ -188,19 +148,15 @@ namespace MM
 		int k = 0;
 		for(auto& i : m)
 		{
-//			std::cout << "TEseast\n";
 			i = std::vector<B>(x);
 		}
 		for(int i = 0;i < y;i++)
 		{
 			k++;
-//			std::cout << m[i].size() << " " << k << std::endl;
 		}
 		k = 0;
-//		std::cout << y*x << std::endl;
 		for(int i = 0;i < y*x;i++)
 		{
-//			std::cout << m.size() << " " << m[j].size() << " " << i << std::endl;
 			m[k][j] = vec[i];
 			j++;
 			if(j == x)
@@ -279,7 +235,6 @@ namespace MM
 	template<typename A>
 	void mat<A>::softmax()
 	{
-		std::cout << y_s << " " << x_s << " \n";
 		for(auto& in_row : m)
 		{
 			double sum = 0;
@@ -348,19 +303,16 @@ namespace MM
 	template<typename A, typename B>
 	mat<double> getError(const mat<A> &left, const mat<B> &right)
 	{
-//		std::cout << left.m.size() << right.m.size() << std::endl;
 		if(left.columns() != right.columns() && left.rows() != right.rows())
 		{
 			std::cout << "Dimension error in getError()\n";
 		}
 		mat<double> error((double) 0.0, left.columns(), left.rows());
-//		std::cout << error.m[0].size() << " " << error.m.size() << "\nleft(col, row): " << left.m[0].size() << " " << left.m.size() << "\nright(col, row): " << right.m[0].size() << " " << right.m.size() << std::endl;
 		for(int i = 0;i<error.columns();i++)
 		{
 			for(int j = 0;j<error.rows();j++)
 			{
-		//		std::cout << left.m[i][j] << " - " << right.m[i][j] << " | ";
-				error.m[j][i] = left.m[j][i] - right.m[j][i];
+				error.m[j][i] = (double)left.m[j][i] - right.m[j][i];
 			}
 		}
 		return error;
@@ -369,7 +321,7 @@ namespace MM
 	template<typename A>
 	mat<A> getTranspose(const mat<A> &original)
 	{
-		mat<A> transposed = original;
+		mat<A> transposed(original);
 		transposed.transpose();
 		return transposed;
 	}
@@ -403,8 +355,6 @@ namespace MM
 			m[i] = std::vector<B>(x_s);
 			for(int j = 0;j < x_s;j++)
 			{
-//				std::cout << i << " " << m.size() << " " << matrix.m.size() << std::endl;
-//				std::cout << j << " " << m[i].size() << " " << matrix.m[i].size() << std::endl;
 				m[i][j] = o.m[i][j];
 				
 			}
@@ -475,7 +425,6 @@ namespace MM
 		}
 		for(int i = 0;i < y*x;i++)
 		{
-//			std::cout << m.size() << " " << m[j].size() << " " << i << std::endl;
 			m[k][j] = vec[i];
 			j++;
 			if(j == x)
@@ -485,7 +434,26 @@ namespace MM
 			}
 		}
 	}
-		
+	
+	template<typename B>
+	void mat<B>::newValues(const mat<B> &original)
+	{
+		x_s = original.columns();
+		y_s = original.rows();
+		std::vector<std::vector<B>> new_m(y_s);
+		for(int i = 0;i < y_s;i++)
+		{
+			std::vector<B> new_row(x_s);
+			new_m[i] = new_row;
+			for(int j = 0;j < x_s;j++)
+			{
+				new_m[i][j] = original.m[i][j];
+			}
+		}
+		m = new_m;
+	}
+
+	
 }
 
 #endif

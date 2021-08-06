@@ -98,17 +98,23 @@ namespace MM
 
 	void nnet::fprop()
 	{
+std::cout << "Input matrix: [" << input.columns() << "][" << input.rows() << "]\n";
 		//Multiply the input layer with the weights between the input and h1 layers
-		mat<int> transposed = getTranspose(input);
-		h1 = mm(wi, transposed);
+		mat<int> transposed(getTranspose(input));
+		h1.newValues(mm(wi, transposed));
+std::cout << "First hidden matrix: [" << h1.columns() << "][" << h1.rows() << "]\n";
 		//Add the bias to each of the hidden states	
 		add(h1, bias1);
 		//Run relu function on the hidden states
-		relu_h1 =getRelu(h1);
-		h2 = mm(w1, relu_h1);
+		relu_h1.newValues(getRelu(h1));
+std::cout << "Hidden matrix after relu: [" << relu_h1.columns() << "][" << relu_h1.rows() << "]\n";
+		h2.newValues(mm(w1, relu_h1));
+std::cout << "Second hidden matrix: [" << h2.columns() << "][" << h2.rows() << "]\n";
 		add(h2, bias2);
-		h2.transpose();
-		out = getSoftmax(h2);
+		mat<double> h2_transposed(getTranspose(h2));
+std::cout << "Second hidden matrix after addition and transpose: [" << h2.columns() << "][" << h2.rows() << "]\n";
+		out.newValues(getSoftmax(h2_transposed));
+std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << "]\n";
 	}
 
 	double calculate_prediction(std::vector<int> labels, std::vector<int> predictions)
@@ -132,15 +138,17 @@ namespace MM
 		int batch_size = targetoutput.rows();
 		
 		//Calculate the difference between target and generated output
-		std::cout << "TEST\n";	
-		mat<double>delta = getError(targetoutput, out);
+		mat<double>delta(getError(targetoutput, out));
+std::cout << "Error matrix: " << delta.toString() << std::cin.get() << std::endl;
+//			std::cout << "Output: " << out.toString() << std::cin.get() << std::endl;
+//			std::cout << "Output error: " << delta.toString() << std::cin.get() << std::endl;
 		//Calculate the adjustments needed for the weights and biases of the second layer
-		mat<double> d_w1 = scalar_m(mm(h1, delta), 1/batch_size);
-		mat<double>dbias2 = scalar_m(sum_m(delta), 1/batch_size);
+		mat<double> d_w1(scalar_m(mm(h1, delta), 1/batch_size));
+		mat<double>dbias2(scalar_m(sum_m(delta), 1/batch_size));
 		//Calculate the adjustments needed for the weights and biases of the first layer
-		mat<double>delta2 = hadamard(mm(w1,getTranspose(delta)), drelu(h1)); 
-		mat<double>d_inputweights = scalar_m(mm(delta2, input), 1/batch_size);
-		mat<double>dbias1 = scalar_m(sum_m(delta), 1/batch_size);
+		mat<double>delta2(hadamard(mm(w1,getTranspose(delta)), drelu(h1))); 
+		mat<double>d_inputweights(scalar_m(mm(delta2, input), 1/batch_size));
+		mat<double>dbias1(scalar_m(sum_m(delta), 1/batch_size));
 		updateParameters(d_inputweights, d_w1, dbias1, dbias2); 
 	}
 	
