@@ -139,21 +139,24 @@ std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << 
 		
 		//Calculate the difference between target and generated output
 		mat<double>delta(getError(targetoutput, out));
-std::cout << "Error matrix: " << delta.toString() << std::cin.get() << std::endl;
+//std::cout << "Error matrix: " << delta.toString() << std::cin.get() << std::endl;
 //			std::cout << "Output: " << out.toString() << std::cin.get() << std::endl;
 //			std::cout << "Output error: " << delta.toString() << std::cin.get() << std::endl;
 		//Calculate the adjustments needed for the weights and biases of the second layer
-		mat<double> d_w1(scalar_m(mm(h1, delta), 1/batch_size));
-		mat<double>dbias2(scalar_m(sum_m(delta), 1/batch_size));
+		mat<double> d_w1(scalar_m(mm(getTranspose(delta), getTranspose(relu_h1)), 1.0/(double)batch_size));
+		mat<double>dbias2(scalar_m(sum_m(delta), 1.0/(double)batch_size));
 		//Calculate the adjustments needed for the weights and biases of the first layer
 		mat<double>delta2(hadamard(mm(w1,getTranspose(delta)), drelu(h1))); 
-		mat<double>d_inputweights(scalar_m(mm(delta2, input), 1/batch_size));
-		mat<double>dbias1(scalar_m(sum_m(delta), 1/batch_size));
+//std::cout << "Second error matrix: " << delta2.toString() << std::cin.get() << std::endl;
+		mat<double>d_inputweights(scalar_m(mm(delta2, input), 1.0/(double)batch_size));
+		mat<double>dbias1(scalar_m(sum_m(delta), 1.0/(double)batch_size));
 		updateParameters(d_inputweights, d_w1, dbias1, dbias2); 
 	}
 	
 	void nnet::updateParameters(const mat<double> &d_inputweights, const mat<double> &d_w1, mat<double> dbias1, mat<double> dbias2)
 	{
+//		std::cout << "Input weights before: " << d_inputweights.toString();
+//		std::cin.get();
 		for(int i = 0;i<wi.rows();i++)
 		{
 			for(int j = 0;j<wi.columns();j++)
@@ -161,6 +164,10 @@ std::cout << "Error matrix: " << delta.toString() << std::cin.get() << std::endl
 				wi.m[i][j] = wi.m[i][j] - learningrate * d_inputweights.m[i][j];
 			}
 		}
+//		std::cout << "\nInput weights after: " << wi.toString();
+//		std::cin.get();
+//		std::cout << "Second weights before: " << d_w1.toString();
+//		std::cin.get();
 		for(int i = 0;i<w1.rows();i++)
 		{
 			for(int j = 0;j<w1.columns();j++)
@@ -168,15 +175,25 @@ std::cout << "Error matrix: " << delta.toString() << std::cin.get() << std::endl
 				w1.m[i][j] = w1.m[i][j] - learningrate * d_w1.m[i][j];
 			}
 		}
-		for(int i = 0;i<bias1.rows();i++)
+//		std::cout << "Second weights after: " << w1.toString();
+//		std::cin.get();
+//		std::cout << "Bias1 before: " << dbias1.toString();
+//		std::cin.get();
+		for(int i = 0;i<bias1.columns();i++)
 		{
 			bias1.m[0][i] -= learningrate * dbias1.m[0][i];
 		}
 
-		for(int i = 0;i<bias2.rows();i++)
+//		std::cout << "\nBias1 after: " << bias1.toString();
+//		std::cin.get();
+//		std::cout << "Bias2 before: " << dbias2.toString();
+//		std::cin.get();
+		for(int i = 0;i<bias2.columns();i++)
 		{
 			bias2.m[0][i] -= learningrate * dbias2.m[0][i];
 		}
+//		std::cout << "\nBias2 after: " << bias2.toString();
+//		std::cin.get();
 	}
 
 

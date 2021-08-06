@@ -53,7 +53,7 @@ namespace MM
 		void relu();
 
 		//toString implementation
-		std::string toString();
+		std::string toString() const;
 
 		//Assignment operator
 		const mat & operator=(const mat& matrix);
@@ -362,7 +362,7 @@ namespace MM
 	}
 
 	template<typename B>
-	std::string mat<B>::toString()
+	std::string mat<B>::toString() const
 	{
 		std::string str = "";
 		for(auto& i : m)

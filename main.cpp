@@ -7,7 +7,7 @@
 #include "multiplym.h"
 
 const int datasize = 60000;
-const int batchsize = 10;
+const int batchsize = 3000;
 const int epoch = 1;
 
 //Main.cpp
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 					images_batch.push_back(images[n*batchsize + i*784 + j]);
 				}
 			}
-
+			
 			imagematrix.newValues(images_batch, 784, batchsize);
 			
 
