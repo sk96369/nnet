@@ -40,12 +40,12 @@ namespace MM
         void updateParameters(const mat<double> &dih1w, const mat<double> &dh1outw, const mat<double> dbias1, const mat<double> dbias2);
 
         public:
- 
+ 	//Function for reading pre-trained parameters from a file
+	void setParameters(const std::string filename);
 	//Function for setting inputs. Returns false if the input vector is of wrong size,
 	//true otherwise.
 	void setInput(const std::vector<int> &vec, int x, int y);      
 	void setInput(const mat<int> &in);
-//	nnet(int inputsize, int h1size, int outsize, std::string filename);
         nnet(const mat<int> &in, int h1size, int outsize, int batch_size);
         //Training function
         void train(std::vector<int> labels, int batch_size, int epoch);
@@ -53,6 +53,9 @@ namespace MM
 	bool saveModel(std::string filename) const;
 	//Function that makes a prediction based on the given inputs
 	void predict(const mat<int> &in);
+	//Function that calls the onehot_toInt -function to get a list of predictions based
+	//on the network's output matrix
+	std::vector<int> getPredictions() const;
 
 	//toString implementation
 	std::string toString();

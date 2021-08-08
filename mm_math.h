@@ -238,7 +238,7 @@ namespace MM
 		for(auto& in_row : m)
 		{
 			double sum = 0;
-			for(size_t i = 0;i < x_s;i++)
+			for(size_t i = 0;i < y_s;i++)
 			{
 				double j = std::exp(in_row[i]);
 				sum+=j;
@@ -262,15 +262,15 @@ namespace MM
 	template <typename A>
 	mat<double> sum_m(const mat<A> &original)
 	{
-		mat<double> collapsed(0.0, original.columns(), 1);
-		for(int i = 0;i<original.columns();i++)
+		mat<double> collapsed(0.0, 1, original.rows());
+		for(int i = 0;i<original.rows();i++)
 		{
 			double sum = 0.0;
-			for(int j = 0;j<original.rows();j++)
+			for(int j = 0;j<original.columns();j++)
 			{
-				sum+=original.m[j][i];
+				sum+=original.m[i][j];
 			}
-			collapsed.m[0][i] = sum;
+			collapsed.m[i][0] = sum;
 		}
 		return collapsed;
 	}

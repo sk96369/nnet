@@ -36,85 +36,71 @@ std::vector<int> onehot_toInt(const MM::mat<double> &oh)
 //multiplym.cpp
 namespace MM
 {
-	
-/*
-	nnet::nnet(int inputsize, int h1size, int outsize, std::string filename)
+	void nnet::setParameters(const std::string filename)
 	{
-		
-		for(int i = 0;i<inputsize;i++)
-		{
-			input.push_back(0);
-		}
-		for(int i = 0;i<h1size;i++)
-		{
-			h1.push_back(0);
-		}
-		for(int i = 0;i<outsize;i++)
-		{
-			out.push_back(0);
-		}
-
 		std::ifstream file;
 		file.open(filename);
-		if(file)
+		if(file.is_open())
 		{
-			size_t phase = 0;
 			double val;
-			while(phase < 10)
+			for(int i = 0;i<bias1.columns();i++)
+			{	
+				file >> val;
+				bias1.m[0][i] = val;
+			}
+			for(int i = 0;i<bias2.columns();i++)
 			{
 				file >> val;
-				std::cout << val << "\n";
-				bias1.push_back(val);
-				phase++;
+				bias2.m[0][i] = val;
 			}
-			while(phase < 20)
+			for(int i = 0;i<wi.rows();i++)
 			{
-				file >> val;
-				bias2.push_back(val);
-				phase++;
+				for(int j = 0;j<wi.columns();j++)
+				{
+					file >> val;
+					wi.m[i][j] = val;
+				}
 			}
-			while(phase < 7840 + 20)
+			for(int i = 0;i<w1.rows();i++)
 			{
-				file >> val;
-				wi.push_back(val);
-				phase++;
-			}
-			while(file >> val)
-			{
-				w1.push_back(val);
-				phase++;
+				for(int j = 0;j<w1.columns();j++)
+				{
+					file >> val;
+					w1.m[i][j] = val;
+				}
 			}
 			file.close();
 		}
 		else
 			std::cout << "File not found!\n";
-	}			
+	}	
 
-*/
-
-	nnet::nnet(const mat<int> &in, int h1size, int outsize, int batch_size) : input(in),  h1(0.0, batch_size, h1size), relu_h1(0.0, batch_size, h1size), bias1(0.01, 10, 1), bias2(0.01, 10, 1), out(0.0, outsize, batch_size), h2(0.0, outsize, batch_size), wi(-0.5, 0.5, 784, 10), w1(-0.5, 0.5, 10, 10), learningrate(0.9)
+	nnet::nnet(const mat<int> &in, int h1size, int outsize, int batch_size) : input(getTranspose(in)),  h1(0.0, batch_size, h1size), relu_h1(0.0, batch_size, h1size), bias1(0.01, 10, 1), bias2(0.01, 10, 1), out(0.0, batch_size, outsize), h2(0.0, batch_size, outsize), wi(-0.5, 0.5, 784, 10), w1(-0.5, 0.5, 10, 10), learningrate(0.9)
 	{}
 
 
 	void nnet::fprop()
 	{
-std::cout << "Input matrix: [" << input.columns() << "][" << input.rows() << "]\n";
+//std::cout << "Input matrix: [" << input.columns() << "][" << input.rows() << "]\n";
 		//Multiply the input layer with the weights between the input and h1 layers
-		mat<int> transposed(getTranspose(input));
-		h1.newValues(mm(wi, transposed));
-std::cout << "First hidden matrix: [" << h1.columns() << "][" << h1.rows() << "]\n";
+		h1.newValues(mm(wi, input));
+//std::cout << "First hidden matrix: [" << h1.columns() << "][" << h1.rows() << "]\n";
 		//Add the bias to each of the hidden states	
 		add(h1, bias1);
 		//Run relu function on the hidden states
 		relu_h1.newValues(getRelu(h1));
-std::cout << "Hidden matrix after relu: [" << relu_h1.columns() << "][" << relu_h1.rows() << "]\n";
+//std::cout << "Hidden matrix after relu: [" << relu_h1.columns() << "][" << relu_h1.rows() << "]\n";
 		h2.newValues(mm(w1, relu_h1));
-std::cout << "Second hidden matrix: [" << h2.columns() << "][" << h2.rows() << "]\n";
+//std::cout << "Second hidden matrix: [" << h2.columns() << "][" << h2.rows() << "]\n";
 		add(h2, bias2);
 		mat<double> h2_transposed(getTranspose(h2));
-std::cout << "Second hidden matrix after addition and transpose: [" << h2.columns() << "][" << h2.rows() << "]\n";
+//std::cout << "Second hidden matrix after addition and transpose: [" << h2.columns() << "][" << h2.rows() << "]\n";
 		out.newValues(getSoftmax(h2_transposed));
-std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << "]\n";
+		out.transpose();
+//std::cout << "Input matrix: " << input.toString() << std::cin.get() << std::endl;
+//std::cout << "Non-softmaxed output matrix: " << h2_transposed.toString() << std::cin.get() << std::endl;
+//std::cout << "Output matrix: " << out.toString() << std::cin.get() << std::endl;
+//std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << "]\n";
 	}
 
 	double calculate_prediction(std::vector<int> labels, std::vector<int> predictions)
@@ -136,20 +122,21 @@ std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << 
 	void nnet::bprop(const mat<int> &targetoutput)
 	{
 		int batch_size = targetoutput.rows();
-		
+		mat<int> transposed_targetoutput(getTranspose(targetoutput));
 		//Calculate the difference between target and generated output
-		mat<double>delta(getError(targetoutput, out));
-//std::cout << "Error matrix: " << delta.toString() << std::cin.get() << std::endl;
+		mat<double>delta(getError(transposed_targetoutput, out));
 //			std::cout << "Output: " << out.toString() << std::cin.get() << std::endl;
 //			std::cout << "Output error: " << delta.toString() << std::cin.get() << std::endl;
 		//Calculate the adjustments needed for the weights and biases of the second layer
-		mat<double> d_w1(scalar_m(mm(getTranspose(delta), getTranspose(relu_h1)), 1.0/(double)batch_size));
+		mat<double> d_w1(scalar_m(mm(delta, getTranspose(relu_h1)), 1.0/(double)batch_size));
 		mat<double>dbias2(scalar_m(sum_m(delta), 1.0/(double)batch_size));
 		//Calculate the adjustments needed for the weights and biases of the first layer
-		mat<double>delta2(hadamard(mm(w1,getTranspose(delta)), drelu(h1))); 
+		mat<double>delta2(hadamard(mm(getTranspose(w1),delta), drelu(h1))); 
 //std::cout << "Second error matrix: " << delta2.toString() << std::cin.get() << std::endl;
-		mat<double>d_inputweights(scalar_m(mm(delta2, input), 1.0/(double)batch_size));
+		mat<double>d_inputweights(scalar_m(mm(delta2, getTranspose(input)), 1.0/(double)batch_size));
 		mat<double>dbias1(scalar_m(sum_m(delta), 1.0/(double)batch_size));
+		d_inputweights.transpose();
+		d_w1.transpose();
 		updateParameters(d_inputweights, d_w1, dbias1, dbias2); 
 	}
 	
@@ -208,7 +195,7 @@ std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << 
         		fprop();
 
 			double accuracy = calculate_prediction(labels, onehot_toInt(out));
-			std::cout << "Prediction accuracy: " << accuracy/100 << "%\n";
+			std::cout << "Prediction accuracy: " << accuracy*100 << "%\n";
 
 			mat<int> oh_labels = int_toOneHot(labels, 10);
 			bprop(oh_labels);
@@ -268,8 +255,13 @@ std::cout << "Output matrix after: [" << out.columns() << "][" << out.rows() << 
 	void nnet::predict(const mat<int> &in)
 	{
 		input = in;
-		std::cout << "TEST2\n";
 		fprop();
+	}
+	
+	std::vector<int> nnet::getPredictions() const
+	{
+		std::vector<int> predictions = onehot_toInt(out);
+		return predictions;
 	}
 
 	void nnet::setInput(const mat<int> &in)
