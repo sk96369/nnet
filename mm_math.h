@@ -9,17 +9,30 @@
 
 namespace MM
 {
+
+	/* Usage of this matrix class from feedforward_network:
+	 * 	Choose the number of units in the layer and call the constructor with the number
+	 * 	(the one below the comment "---node_constructor---")
+	 * 	Call the newValues function directly below the comment "---input_values---"
+	 * 	giving it a vector of size batch_size*units_in_the_layer as the argument.
+	 * 	All done!
+	 */
+
 	template<typename A>
 	class mat
 	{
 		int x_s;
 		int y_s;
 
+		//Transposes the matrix
+		void transpose();
+
+
 		public:
 		std::vector<std::vector<A>> m;
 
 		/* Getters, Setters */
-		A getType() const {return m[0][0];}
+		int size() const {return y_s;}
 		int rows() const {return y_s;}
 		int columns() const {return x_s;}
 		bool isEmpty() const {return x_s == 0;}
@@ -28,24 +41,27 @@ namespace MM
 		std::vector<A> getVector() const;
 
 		/*Constructors*/
-		//Matrix created from an std::vector, split into rows every x members of vec
+		//Default constructor
 		mat();
-		mat(const std::vector<A> &vec, int x = 0, int y = 0);
+		//---node_constructor---
+		//Constructor that creates given number of empty vectors
+		mat(int layersize);
+		//Matrix created from an std::vector, split into columns every x members of vec
+		mat(const std::vector<A> &vec, int y = 0, int x = 0);
 		//A matrix filled with a
-		mat(A a, int x = 0, int y = 0);
-
+		mat(A a, int x, int y);
 		//A matrix filled with random doubles ranging from a to b
 		mat(double a, double b, int x, int y);
 		//Copy constructor
 		mat(const mat &o);
 
-		//Function for setting new values for the matrix based on the given vector
+		//Functions for setting new values for the matrix based on the given arguments
+		//---input_values---
+		void newValues(const std::vector<A> &vec);
 		void newValues(const std::vector<A> &vec, int x, int y);
 		void newValues(const mat<A> &original);
 
 		/* member functions */
-		//Matrix transpose
-		void transpose();
 		//Applies the softmax function on the second hidden layer to get the output
 		//layer.
 		void softmax();
@@ -56,8 +72,11 @@ namespace MM
 		std::string toString() const;
 
 		//Assignment operator
-		const mat & operator=(const mat& matrix);
-	};
+		mat<A> & operator=(const mat& matrix);
+		
+		std::vector<A>& operator[](int i) {return m[i];}
+		const std::vector<A>& operator[](int i) const {return m[i];}
+		};
 
 	template <typename A, typename B>
 	mat<double> mm(const mat<A> &left, const mat<B> &right)
@@ -141,14 +160,14 @@ namespace MM
 	}
 
 	template <typename B>
-	mat<B>::mat(const std::vector<B> &vec, int x, int y) : x_s(x), y_s(y)
+	mat<B>::mat(const std::vector<B> &vec, int y, int x) : y_s(y), x_s(x)
 	{
-		m = std::vector<std::vector<B>>(y);
+		m = std::vector<std::vector<B>>(x);
 		int j = 0;
 		int k = 0;
 		for(auto& i : m)
 		{
-			i = std::vector<B>(x);
+			i = std::vector<B>(y);
 		}
 		for(int i = 0;i < y;i++)
 		{
@@ -341,9 +360,22 @@ namespace MM
 	}
 
 	template<typename B>
-	const mat<B>& mat<B>::operator=(const mat<B>& matrix)
+	mat<B>& mat<B>::operator=(const mat<B>& matrix)
 	{
+		x_s = matrix.columns();
+		y_s = matrix.rows();
+		m = matrix.m;
+		for(int i = 0;i < y_s;i++)
+		{
+			m[i] = matrix[i];
+		}
 		return *this;
+	}
+
+	template<typename B>
+	mat<B>::mat(int layersize) : y_s(layersize), x_s(0)
+	{
+		m = std::vector<std::vector<B>>(layersize);
 	}
 
 	template<typename B>
@@ -410,6 +442,21 @@ namespace MM
 		return in;
 	}
 	
+	template<typename B>
+	void mat<B>::newValues(const std::vector<B> &vec)
+	{
+		y_s = vec.size() / x_s;
+		for(int i = 0;i<x_s;i++)
+		{
+			m[i] = std::vector<B>(y_s);
+			for(int j = 0;j<y_s;j++)
+			{
+				m[i][j] = vec[i*y_s + j];
+			}
+		}
+	}
+
+
 	template<typename B>
 	void mat<B>::newValues(const std::vector<B> &vec, int x, int y)
 	{

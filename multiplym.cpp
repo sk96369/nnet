@@ -22,7 +22,7 @@ std::vector<int> onehot_toInt(const MM::mat<double> &oh)
 		int max = 0;
 		for(int j = 0;j<columns;j++)
 		{
-			if(oh.m[i][j] > oh.m[i][max])
+			if(oh[i][j] > oh[i][max])
 			{
 				max = j;
 			}
@@ -46,19 +46,19 @@ namespace MM
 			for(int i = 0;i<bias1.columns();i++)
 			{	
 				file >> val;
-				bias1.m[0][i] = val;
+				bias1[0][i] = val;
 			}
 			for(int i = 0;i<bias2.columns();i++)
 			{
 				file >> val;
-				bias2.m[0][i] = val;
+				bias2[0][i] = val;
 			}
 			for(int i = 0;i<wi.rows();i++)
 			{
 				for(int j = 0;j<wi.columns();j++)
 				{
 					file >> val;
-					wi.m[i][j] = val;
+					wi[i][j] = val;
 				}
 			}
 			for(int i = 0;i<w1.rows();i++)
@@ -66,7 +66,7 @@ namespace MM
 				for(int j = 0;j<w1.columns();j++)
 				{
 					file >> val;
-					w1.m[i][j] = val;
+					w1[i][j] = val;
 				}
 			}
 			file.close();
@@ -78,6 +78,9 @@ namespace MM
 	nnet::nnet(const mat<int> &in, int h1size, int outsize, int batch_size) : input(getTranspose(in)),  h1(0.0, batch_size, h1size), relu_h1(0.0, batch_size, h1size), bias1(0.01, 10, 1), bias2(0.01, 10, 1), out(0.0, batch_size, outsize), h2(0.0, batch_size, outsize), wi(-0.5, 0.5, 784, 10), w1(-0.5, 0.5, 10, 10), learningrate(0.9)
 	{}
 
+	nnet::nnet()
+	{
+	}
 
 	void nnet::fprop()
 	{
@@ -148,7 +151,7 @@ namespace MM
 		{
 			for(int j = 0;j<wi.columns();j++)
 			{
-				wi.m[i][j] = wi.m[i][j] - learningrate * d_inputweights.m[i][j];
+				wi[i][j] = wi[i][j] - learningrate * d_inputweights[i][j];
 			}
 		}
 //		std::cout << "\nInput weights after: " << wi.toString();
@@ -159,7 +162,7 @@ namespace MM
 		{
 			for(int j = 0;j<w1.columns();j++)
 			{
-				w1.m[i][j] = w1.m[i][j] - learningrate * d_w1.m[i][j];
+				w1[i][j] = w1[i][j] - learningrate * d_w1[i][j];
 			}
 		}
 //		std::cout << "Second weights after: " << w1.toString();
@@ -168,7 +171,7 @@ namespace MM
 //		std::cin.get();
 		for(int i = 0;i<bias1.columns();i++)
 		{
-			bias1.m[0][i] -= learningrate * dbias1.m[0][i];
+			bias1[0][i] -= learningrate * dbias1[0][i];
 		}
 
 //		std::cout << "\nBias1 after: " << bias1.toString();
@@ -177,7 +180,7 @@ namespace MM
 //		std::cin.get();
 		for(int i = 0;i<bias2.columns();i++)
 		{
-			bias2.m[0][i] -= learningrate * dbias2.m[0][i];
+			bias2[0][i] -= learningrate * dbias2[0][i];
 		}
 //		std::cout << "\nBias2 after: " << bias2.toString();
 //		std::cin.get();
@@ -292,7 +295,7 @@ namespace MM
 		int k = 0;
 		for(int i = 0;i < vec.size();i++)
 		{
-			input.m[j][k] = vec[i];
+			input[j][k] = vec[i];
 			k++;
 			if(k == x)
 			{
@@ -312,7 +315,7 @@ namespace MM
 			int k = 0;
 			for(int j = 0;j<input.columns();j++)
 			{
-				if(input.m[i][j] == 0)
+				if(input[i][j] == 0)
 					str.append(" ");
 				else
 					str.append("#");
