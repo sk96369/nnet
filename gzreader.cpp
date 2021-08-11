@@ -168,7 +168,8 @@ int main()
 }*/
 
 //Main function for testing
-/*int main()
+/*
+int main()
 {
 	vector<int> labels = readmnistgz("traininglabels");
 	vector<int> images = readmnistgz("imagedata");
@@ -183,4 +184,5 @@ int main()
 					}
 	}
 	printf("\n");
-}*/
+}
+*/

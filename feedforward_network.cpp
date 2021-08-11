@@ -13,29 +13,28 @@
 
 namespace MM
 {
-	/* MEMBERS OF THE CLASS FOR REFERENCE */
-//	mat<int> input;
-//	std::vector<mat<double>> hidden_layers;
-//	std::vector<mat<double>> biases;
-//	mat<double>output;
-
-	nnet::nnet(std::vector<int> dimensions) : learningrate(0.1), size(dimensions.size()), hidden_layers(dimensions.size() - 2), weights(dimensions.size()), input(dimensions[0]), output(dimensions[dimensions.size() - 1])
+	nnet::nnet(const std::vector<int> &dimensions, int f_max) : features_maxvalue(f_max), learningrate(0.1), size(dimensions.size() - 1), hidden_layers(dimensions.size() - 1), weights(dimensions.size() - 1), input(dimensions[0]), input_normalized(dimensions[0]), outputs(dimensions.size() - 1), biases(dimensions.size() - 1)
 	{
-		for(int i = 1;i<size - 1;i++)
+		//Normalize input
+		input_normalized.newValues(getNormalized(input, f_max));
+
+		for(int i = 0;i<size;i++)
 		{
-			mat<double> newlayer(dimensions[i]);
-			hidden_layers[i-1] = newlayer;
+			mat<double> newlayer(dimensions[i + 1]);
+			mat<double> newoutputlayer(dimensions[i+1]);
+			hidden_layers[i] = newlayer;
+			outputs[i] = newoutputlayer;
 		}
 
-		for(int i = 1;i<size;i++)
+		for(int i = 0;i<size;i++)
 		{
-			mat<double> newweight(-0.5, 0.5, *this[i-1].size(), *this[i].size());
-			weights[i-1] = newweight;
+			mat<double> newweight(-0.5, 0.5, getLayer(i-1).size(), getLayer(i).size());
+			weights[i] = newweight;
 		}
-		for(int i = 1;i<size;i++)
+		for(int i = 0;i<size;i++)
 		{
-			mat<double> newbias(-0.2, 0.2, 0, *this[i].size());
-			biases[i-1] = newbias;
+			mat<double> newbias(-0.2, 0.2, 1, getLayer(i).size());
+			biases[i] = newbias;
 		}
 	}
 
@@ -54,7 +53,16 @@ namespace MM
 			imagebatch.assign(image_start, image_end);
 			labelbatch.assign(label_start, label_end);
 
-			input.newValues(imagebatch);
+			//Propagate forward
+			setInput(imagebatch);
+
+		std::cout << "TEST2.5\n";
+			fprop();
+
+
+		std::cout << "TEST2.6\n";
+			//Backpropagate
+			bprop(labelbatch);
 
 			//Move the iterators
 			image_start += batchsize*imagesize;
@@ -64,52 +72,119 @@ namespace MM
 				image_end += batchsize*imagesize;
 				label_end += batchsize;
 			}
+		}
 			
 	}
 	void nnet::fprop()
 	{
+		int i = 0;
+		for(;i<size-1;i++)
+		{
+			std::cout << "Previous layer: " << getLayer(i-1).rows() << " " << getLayer(i-1).columns() << std::endl;
+			getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
+			getOutput(i).newValues(getRelu(getLayer(i)));
+		std::cout << "TEST      4 " << getLayer(i).rows() << " " << getLayer(i).columns() << "\n";
 
+		}
+		getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
+		std::cout << "TEST      4 " << getLayer(i).rows() << " " << getLayer(i).columns() << "\n";
+		getOutput(i).newValues(getSoftmax(getLayer(i)));
+		std::cout << "TEST      5\n";
 	}
-	void nnet::bprop()
+	void nnet::bprop(const std::vector<int> &labels)
 	{
+		int i = size-1;
+		std::vector<mat<double>> weights_delta(size);
+		std::vector<mat<double>> biases_delta(size);
+
+		mat<double> target_output(int_toOneHot(labels, outputs[i].size()));
+		mat<double> delta = getError(target_output, outputs[i]);
+
+		weights_delta[i] = (mm(scalar_m(delta, 1/delta.columns()), getTranspose(outputs[i])));
+		biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
+
+		for(i--;i>=0;i--)
+		{
+			delta.newValues(hadamard(mm(getTranspose(weights[i+1]), delta), drelu(getLayer(i))));
+			weights_delta[i] = (mm(scalar_m(delta, 1/delta.columns()),
+						getTranspose(outputs[i])));
+			biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
+		}
+		updateParameters(weights_delta, biases_delta);
+	}
+
+	void nnet::updateParameters(std::vector<mat<double>> weights_delta, std::vector<mat<double>> biases_delta)
+	{
+		for(int i = 0;i<size;i++)
+		{
+			weights[i].newValues(getError(weights_delta[i], scalar_m(weights_delta[i], learningrate)));
+			biases[i].newValues(getError(biases_delta[i], scalar_m(biases_delta[i], learningrate)));
+		}
 	}
 
 	std::vector<int> nnet::getDimensions()
 	{
-		std::vector<int> dimensions(size);
+		std::vector<int> dimensions(size + 1);
 		dimensions[0] = input.size();
-		for(int i = 1;i<size - 1;i++)
+		for(int i = 0;i<size;i++)
 		{
-			dimensions[i] = hidden_layers[i-1].size();
+			dimensions[i+1] = getLayer(i).size();
 		}
-		dimensions[size-1] = output.size();
 		return dimensions;
 	}
 
-	mat<A>& operator[](int i)
+	void nnet::setInput(const std::vector<int> &newinput)
 	{
-		if(i == 0)
+		int features = input.size();
+		std::vector<double> newinput_double(newinput.size());
+		for(int i = 0;i<newinput_double.size();i++)
 		{
-			return input;
+			newinput_double[i] = (double)newinput[i];
 		}
-		else if(i == size-1)
-		{
-			return output;
-		}
+		input_normalized.newValues(getNormalized(input, features_maxvalue));
+	}
+
+	mat<double>& nnet::getLayer(int i)
+	{
+		if(i == -1)
+			return input_normalized;
 		return hidden_layers[i];
 	}
 
-	const mat<A>& operator[](int i) const
+	const mat<double>& nnet::getLayer(int i) const
 	{
-		if(i == 0)
-		{
-			return input;
-		}
-		else if(i == size-1)
-		{
-			return output;
-		}
+		if(i == -1)
+			return input_normalized;
 		return hidden_layers[i];
 	}
 
+	mat<double>& nnet::getOutput(int i)
+	{
+		if(i == -1)
+			return input_normalized;
+		return outputs[i];
+	}
+
+	const mat<double>& nnet::getOutput(int i) const
+	{
+		if(i == -1)
+			return input_normalized;
+		return outputs[i];
+	}
+
+	int nnet::saveModel(std::string filename)
+	{
+		filename.append(".txt");
+		std::ofstream file;
+		file.open(filename);
+		if(file.is_open())
+		{
+			for(int i = 0;i<size;i++)
+			{
+				file << biases[i].toString() << weights[i].toString();
+			}
+		}
+		file.close();
+		return 0;
+	}
 }

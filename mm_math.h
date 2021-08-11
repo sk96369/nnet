@@ -24,10 +24,6 @@ namespace MM
 		int x_s;
 		int y_s;
 
-		//Transposes the matrix
-		void transpose();
-
-
 		public:
 		std::vector<std::vector<A>> m;
 
@@ -40,6 +36,9 @@ namespace MM
 		//as a single vector, otherwise returns an empty vector
 		std::vector<A> getVector() const;
 
+		//Transposes the matrix
+		void transpose();
+
 		/*Constructors*/
 		//Default constructor
 		mat();
@@ -48,6 +47,8 @@ namespace MM
 		mat(int layersize);
 		//Matrix created from an std::vector, split into columns every x members of vec
 		mat(const std::vector<A> &vec, int y = 0, int x = 0);
+		//Copy the vector of vectors given as arguments into m
+		mat(const std::vector<std::vector<A>> &mcopy);
 		//A matrix filled with a
 		mat(A a, int x, int y);
 		//A matrix filled with random doubles ranging from a to b
@@ -62,9 +63,6 @@ namespace MM
 		void newValues(const mat<A> &original);
 
 		/* member functions */
-		//Applies the softmax function on the second hidden layer to get the output
-		//layer.
-		void softmax();
 		//Applies the relu function
 		void relu();
 
@@ -245,35 +243,34 @@ namespace MM
 	}
 
 	template<typename A>
-	mat<double> getSoftmax(mat<A> in)
+	mat<A> getSoftmax(const mat<A> &o)
 	{
-		in.softmax();
-		return in;
-	}
-
-	template<typename A>
-	void mat<A>::softmax()
-	{
-		for(auto& in_row : m)
+		std::cout << "softmax test xDDDDDD\n" << o.rows() << " " << o.columns() << "\n";
+		mat<A> softmaxed(o);
+		for(auto& in_column : softmaxed.m)
 		{
 			double sum = 0;
-			for(size_t i = 0;i < y_s;i++)
+			for(size_t i = 0;i < o.rows();i++)
 			{
-				double j = std::exp(in_row[i]);
+				double j = std::exp(in_column[i]);
 				sum+=j;
 			}
     		
-    			for(size_t i = 0;i<x_s;++i)
+		std::cout << "softmax test xDDDDDD\n";
+    			for(size_t i = 0;i<o.rows();++i)
     			{
-    			    in_row[i] = std::exp(in_row[i])/sum;
+    			    in_column[i] = std::exp(in_column[i])/sum;
     			}
+		std::cout << "softmax test AGAIN XDDDDDD\n";
 			//Check for a nan-value, and change it to 1 if one is found
-			for(auto& i : in_row)
+			for(auto& i : in_column)
 			{
 				if(isnan(i))
 					i = 1;
+		std::cout << "softmax test 66666666 XDDDDDD\n";
 			}
 		}
+		return softmaxed;
 	}
 	
 	
@@ -310,7 +307,7 @@ namespace MM
 	template <typename B>
 	mat<B> drelu(const mat<B> &matrix)
 	{
-		mat<B> derivatives = matrix;
+		mat<B> derivatives(matrix);
 		for(auto& i : derivatives.m)
 		{
 			for(auto& j : i)
@@ -345,19 +342,7 @@ namespace MM
 		return transposed;
 	}
 
-	template<typename A>
-	mat<A> scalar_m(mat<A> original, double scalar)
-	{
-		mat<A> product = original;
-		for(auto& i : product.m)
-		{
-			for(auto& j : i)
-			{
-				j *= scalar;
-			}
-		}
-		return product;
-	}
+	
 
 	template<typename B>
 	mat<B>& mat<B>::operator=(const mat<B>& matrix)
@@ -402,7 +387,7 @@ namespace MM
 			for(auto& j : i)
 			{
 				str += std::to_string(j);
-				str += "/";
+				str += " ";
 			}
 			str.pop_back();
 			str.append("\n");
@@ -410,24 +395,28 @@ namespace MM
 		return str;
 	}
 
+	//Function that copies the left matrix, then adds each the value from right
+	//to each of the elements on the left, row by row
 	template<typename A, typename B>
-	bool add(mat<A> &left, mat<B> right)
+	mat<double> add(const mat<A> &left, const mat<B> right)
 	{
-		std::vector<B> vec = right.getVector();
-		int vec_size = vec.size();
-		if(vec_size == left.rows());
+		mat<double> sum_matrix(left);
+		if(right.rows() == left.rows() && right.columns() == 1);
 		{
-			for(int i = 0;i<left.columns();i++)
+			for(int i = 0;i<left.rows();i++)
 			{
-				for(int j = 0;j<left.rows();j++)
+				for(int j = 0;j<left.columns();j++)
 				{
-					left.m[j][i] += vec[j];
+					sum_matrix[i][j] += right[i][0];
 				}
 			}
-			return true;
+			return sum_matrix;
 		}
+		//If nothing has been returned yet, return the copied left matrix and print
+		//an error message
 		std::cout << "Addition error!\n";
-		return false;
+		return sum_matrix;
+
 	}
 
 	template<typename B>
@@ -441,14 +430,17 @@ namespace MM
 		in.relu();
 		return in;
 	}
-	
+
 	template<typename B>
 	void mat<B>::newValues(const std::vector<B> &vec)
 	{
-		y_s = vec.size() / x_s;
+		x_s = vec.size() / y_s;
+		for(int i = 0;i<y_s;i++)
+		{
+			m[i] = std::vector<B>(x_s);
+		}
 		for(int i = 0;i<x_s;i++)
 		{
-			m[i] = std::vector<B>(y_s);
 			for(int j = 0;j<y_s;j++)
 			{
 				m[i][j] = vec[i*y_s + j];
@@ -500,7 +492,17 @@ namespace MM
 		m = new_m;
 	}
 
-	
+	template<typename B>
+	mat<B>::mat(const std::vector<std::vector<B>> &mcopy) : x_s(mcopy[0].size()), y_s(mcopy.size()), m(mcopy)
+	{
+		for(int i = 0;i<y_s;i++)
+		{
+			m[i] = mcopy[i];
+		}
+	}
+
+	mat<double> getNormalized(const mat<int> &original, int feature_max);
+	mat<double> scalar_m(const mat<double> &original, double scalar);
 }
 
 #endif
