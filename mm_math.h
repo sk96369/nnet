@@ -158,25 +158,20 @@ namespace MM
 	}
 
 	template <typename B>
-	mat<B>::mat(const std::vector<B> &vec, int y, int x) : y_s(y), x_s(x)
+	mat<B>::mat(const std::vector<B> &vec, int x, int y) : y_s(y), x_s(x)
 	{
-		m = std::vector<std::vector<B>>(x);
+		m = std::vector<std::vector<B>>(y);
 		int j = 0;
 		int k = 0;
 		for(auto& i : m)
 		{
-			i = std::vector<B>(y);
+			i = std::vector<B>(x);
 		}
-		for(int i = 0;i < y;i++)
-		{
-			k++;
-		}
-		k = 0;
 		for(int i = 0;i < y*x;i++)
 		{
-			m[k][j] = vec[i];
+			m[j][k] = vec[i];
 			j++;
-			if(j == x)
+			if(j == y)
 			{
 				j = 0;
 				k++;
@@ -245,7 +240,6 @@ namespace MM
 	template<typename A>
 	mat<A> getSoftmax(const mat<A> &o)
 	{
-		std::cout << "softmax test xDDDDDD\n" << o.rows() << " " << o.columns() << "\n";
 		mat<A> softmaxed(o);
 		for(auto& in_column : softmaxed.m)
 		{
@@ -256,18 +250,15 @@ namespace MM
 				sum+=j;
 			}
     		
-		std::cout << "softmax test xDDDDDD\n";
     			for(size_t i = 0;i<o.rows();++i)
     			{
     			    in_column[i] = std::exp(in_column[i])/sum;
     			}
-		std::cout << "softmax test AGAIN XDDDDDD\n";
 			//Check for a nan-value, and change it to 1 if one is found
 			for(auto& i : in_column)
 			{
 				if(isnan(i))
 					i = 1;
-		std::cout << "softmax test 66666666 XDDDDDD\n";
 			}
 		}
 		return softmaxed;

@@ -52,16 +52,14 @@ namespace MM
 		{
 			imagebatch.assign(image_start, image_end);
 			labelbatch.assign(label_start, label_end);
-
 			//Propagate forward
 			setInput(imagebatch);
-
-		std::cout << "TEST2.5\n";
+			
+			std::cout << "\n\nFprop:\n";
 			fprop();
 
-
-		std::cout << "TEST2.6\n";
 			//Backpropagate
+			std::cout << "\n\nBprop:\n";
 			bprop(labelbatch);
 
 			//Move the iterators
@@ -73,42 +71,44 @@ namespace MM
 				label_end += batchsize;
 			}
 		}
-			
 	}
+
 	void nnet::fprop()
 	{
 		int i = 0;
 		for(;i<size-1;i++)
 		{
-			std::cout << "Previous layer: " << getLayer(i-1).rows() << " " << getLayer(i-1).columns() << std::endl;
+			std::cout << "Layer " << i << " mm\n";
 			getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
 			getOutput(i).newValues(getRelu(getLayer(i)));
-		std::cout << "TEST      4 " << getLayer(i).rows() << " " << getLayer(i).columns() << "\n";
 
 		}
+			std::cout << "Layer " << i << " mm\n";
 		getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
-		std::cout << "TEST      4 " << getLayer(i).rows() << " " << getLayer(i).columns() << "\n";
 		getOutput(i).newValues(getSoftmax(getLayer(i)));
-		std::cout << "TEST      5\n";
 	}
+
 	void nnet::bprop(const std::vector<int> &labels)
 	{
 		int i = size-1;
 		std::vector<mat<double>> weights_delta(size);
 		std::vector<mat<double>> biases_delta(size);
-
 		mat<double> target_output(int_toOneHot(labels, outputs[i].size()));
+
 		mat<double> delta = getError(target_output, outputs[i]);
 
 		weights_delta[i] = (mm(scalar_m(delta, 1/delta.columns()), getTranspose(outputs[i])));
 		biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
-
+		std::cout << outputs[i].columns() << " " << outputs[i].rows() << " <-OUTPUT - WEIGHT->" << weights[i].columns() << " " << weights[i].rows() << "-" << weights_delta[i].columns() << " " << weights_delta[i].rows() << std::endl;
 		for(i--;i>=0;i--)
 		{
 			delta.newValues(hadamard(mm(getTranspose(weights[i+1]), delta), drelu(getLayer(i))));
-			weights_delta[i] = (mm(scalar_m(delta, 1/delta.columns()),
-						getTranspose(outputs[i])));
+			std::cout << "weight_delta mm " << outputs[i].columns() << " " << outputs[i].rows() << "\n";
+			weights_delta[i] = mm(scalar_m(delta, 1/delta.columns()),
+						getTranspose(outputs[i]));
+			std::cout << delta.columns() << " " << delta.rows() << "bias_delta mm\n";
 			biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
+		std::cout <<" blööbllöö " << weights[i].columns() << " " << weights[i].rows() << "-" << weights_delta[i].columns() << " " << weights_delta[i].rows() << std::endl;
 		}
 		updateParameters(weights_delta, biases_delta);
 	}
@@ -135,13 +135,8 @@ namespace MM
 
 	void nnet::setInput(const std::vector<int> &newinput)
 	{
-		int features = input.size();
-		std::vector<double> newinput_double(newinput.size());
-		for(int i = 0;i<newinput_double.size();i++)
-		{
-			newinput_double[i] = (double)newinput[i];
-		}
-		input_normalized.newValues(getNormalized(input, features_maxvalue));
+		mat<int> newinput_mat(newinput, newinput.size()/input.size(), input.size());
+		input_normalized.newValues(getNormalized(newinput_mat, features_maxvalue));
 	}
 
 	mat<double>& nnet::getLayer(int i)

@@ -56,13 +56,13 @@ MM::mat<int> int_toOneHot(const std::vector<B> &in, int max)
 //List of integers into a one-hot-encoded double matrix
 MM::mat<double> int_toOneHot(const std::vector<int> &in, int max)
 {
-	int rows = in.size();
+	int columns = in.size();
 	//Creates a new matrix with all the elements set to 0
-	MM::mat<double> onehot((int)0, max, rows);
-	for(int i = 0;i<rows;i++)
+	MM::mat<double> onehot((int)0, columns, max);
+	for(int i = 0;i<columns;i++)
 	{
 		//Sets the element at in[i] to 1
-		onehot.m[i][(int)in[i]] = 1;
+		onehot.m[(int)in[i]][i] = 1;
 	}
 	return onehot;
 }
