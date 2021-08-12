@@ -15,9 +15,7 @@ namespace MM
 {
 	nnet::nnet(const std::vector<int> &dimensions, int f_max) : features_maxvalue(f_max), learningrate(0.1), size(dimensions.size() - 1), hidden_layers(dimensions.size() - 1), weights(dimensions.size() - 1), input(dimensions[0]), input_normalized(dimensions[0]), outputs(dimensions.size() - 1), biases(dimensions.size() - 1)
 	{
-		//Normalize input
-		input_normalized.newValues(getNormalized(input, f_max));
-
+		
 		for(int i = 0;i<size;i++)
 		{
 			mat<double> newlayer(dimensions[i + 1]);
@@ -25,7 +23,6 @@ namespace MM
 			hidden_layers[i] = newlayer;
 			outputs[i] = newoutputlayer;
 		}
-
 		for(int i = 0;i<size;i++)
 		{
 			mat<double> newweight(-0.5, 0.5, getLayer(i-1).size(), getLayer(i).size());
@@ -33,7 +30,7 @@ namespace MM
 		}
 		for(int i = 0;i<size;i++)
 		{
-			mat<double> newbias(-0.2, 0.2, 1, getLayer(i).size());
+			mat<double> newbias(-0.2, 0.2, 1, getLayer(i).rows());
 			biases[i] = newbias;
 		}
 	}
@@ -55,11 +52,19 @@ namespace MM
 			//Propagate forward
 			setInput(imagebatch);
 			
-			std::cout << "\n\nFprop:\n";
+			std::cout << "Fprop:\n";
 			fprop();
 
+			//Print outputs
+			std::vector<int> vec = onehot_toInt(getOutput(1));
+			for(int ptr = 0;ptr < vec.size();ptr++)
+			{
+				std::cout << vec[ptr] << " ";
+			}
+			std::cout << std::endl;
+
 			//Backpropagate
-			std::cout << "\n\nBprop:\n";
+			std::cout << "Bprop:\n";
 			bprop(labelbatch);
 
 			//Move the iterators
@@ -88,27 +93,40 @@ namespace MM
 		getOutput(i).newValues(getSoftmax(getLayer(i)));
 	}
 
+	mat<double> nnet::getOutput()
+	{
+		return outputs[size-1];
+	}
+
 	void nnet::bprop(const std::vector<int> &labels)
 	{
 		int i = size-1;
 		std::vector<mat<double>> weights_delta(size);
 		std::vector<mat<double>> biases_delta(size);
-		mat<double> target_output(int_toOneHot(labels, outputs[i].size()));
+		mat<double> target_output(int_toOneHot(labels, outputs[size-1].size()));
 
 		mat<double> delta = getError(target_output, outputs[i]);
 
+		std::cout << target_output.toString() << std::endl;
+		std::cout << getOutput().toString() << std::endl;
+		std::cout << delta.toString() << std::endl;
+
 		weights_delta[i] = (mm(scalar_m(delta, 1/delta.columns()), getTranspose(outputs[i])));
 		biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
-		std::cout << outputs[i].columns() << " " << outputs[i].rows() << " <-OUTPUT - WEIGHT->" << weights[i].columns() << " " << weights[i].rows() << "-" << weights_delta[i].columns() << " " << weights_delta[i].rows() << std::endl;
+
+//		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
+//		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());
+
 		for(i--;i>=0;i--)
 		{
 			delta.newValues(hadamard(mm(getTranspose(weights[i+1]), delta), drelu(getLayer(i))));
-			std::cout << "weight_delta mm " << outputs[i].columns() << " " << outputs[i].rows() << "\n";
 			weights_delta[i] = mm(scalar_m(delta, 1/delta.columns()),
-						getTranspose(outputs[i]));
-			std::cout << delta.columns() << " " << delta.rows() << "bias_delta mm\n";
+						getTranspose(getLayer(i-1)));
 			biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
-		std::cout <<" blööbllöö " << weights[i].columns() << " " << weights[i].rows() << "-" << weights_delta[i].columns() << " " << weights_delta[i].rows() << std::endl;
+
+//		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
+//		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());
+
 		}
 		updateParameters(weights_delta, biases_delta);
 	}
@@ -135,7 +153,7 @@ namespace MM
 
 	void nnet::setInput(const std::vector<int> &newinput)
 	{
-		mat<int> newinput_mat(newinput, newinput.size()/input.size(), input.size());
+		mat<int> newinput_mat(newinput, newinput.size()/input.rows(), input.rows());
 		input_normalized.newValues(getNormalized(newinput_mat, features_maxvalue));
 	}
 

@@ -42,13 +42,13 @@ int single_onehot_toInt(const std::vector<int> &oh)
 template<typename B>
 MM::mat<int> int_toOneHot(const std::vector<B> &in, int max)
 {
-	int rows = in.size();
+	int columns = in.size();
 	//Creates a new matrix with all the elements set to 0
-	MM::mat<int> onehot((int)0, max, rows);
-	for(int i = 0;i<rows;i++)
+	MM::mat<int> onehot((int)0, columns, max);
+	for(int i = 0;i<columns;i++)
 	{
 		//Sets the element at in[i] to 1
-		onehot.m[i][(int)in[i]] = 1;
+		onehot.m[(int)in[i]][i] = 1;
 	}
 	return onehot;
 }
@@ -73,12 +73,12 @@ std::vector<int> onehot_toInt(const MM::mat<B> &oh)
 	int columns = oh.columns();
 	int rows = oh.rows();
 	std::vector<int> outputs_as_integers;
-	for(int i = 0;i<rows;i++)
+	for(int i = 0;i<columns;i++)
 	{
 		int max = 0;
-		for(int j = 0;j<columns;j++)
+		for(int j = 0;j<rows;j++)
 		{
-			if(oh.m[i][j] > oh.m[i][max])
+			if(oh.m[j][i] > oh.m[max][i])
 			{
 				max = j;
 			}

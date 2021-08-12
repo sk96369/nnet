@@ -86,13 +86,14 @@ namespace MM
 		}
 		
 		mat<double> newmatrix((double)0.0, right.columns(), left.rows());
+		std::cout << "newmatrix: " << newmatrix.m.size() << " " << newmatrix.m[0].size() << std::endl;
 		for(int i = 0;i<newmatrix.rows();i++)
 		{
 			for(int j = 0;j<newmatrix.columns();j++)
 			{
 				for(int k = 0;k < left.columns();k++)
 				{
-					newmatrix.m[i][j] += (double)left.m[i][k] * (double)right.m[k][j];
+					newmatrix.m[j][i] += (double)left.m[k][i] * (double)right.m[j][k];
 			//		std::cout << newmatrix.m[i][j] << " ";     //TESTOUTPUT
 				}
 				
@@ -130,17 +131,15 @@ namespace MM
 	}
 
 	template<typename B>
-	mat<B>::mat(double a, double b, int x, int y) : x_s(x), y_s(y)
+	mat<B>::mat(double a, double b, int x, int y) : x_s(x), y_s(y), m(x)
 	{
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_real_distribution<double> distr(a, b);
-		m = std::vector<std::vector<double>>(y);
-		for(auto& i : m)
-			i=std::vector<double>(x);
-		for(int i = 0;i<y;i++)
+		for(int i = 0;i<x;i++)
 		{
-			for(int j = 0;j<x;j++)
+			m[i] = std::vector<double>(y);
+			for(int j = 0;j<y;j++)
 			{
 				m[i][j] = distr(rd);
 			}
@@ -148,28 +147,26 @@ namespace MM
 	}
 
 	template <typename B>
-	mat<B>::mat(B b, int x, int y) : x_s(x), y_s(y)
+	mat<B>::mat(B b, int x, int y) : x_s(x), y_s(y), m(x)
 	{
-		m = std::vector<std::vector<B>>(y);
-		for(int i = 0;i < y;i++)
+		for(int i = 0;i < x;i++)
 		{
-			m[i] = std::vector<B>(x, b);
+			m[i] = std::vector<B>(y, b);
 		}
 	}
 
 	template <typename B>
-	mat<B>::mat(const std::vector<B> &vec, int x, int y) : y_s(y), x_s(x)
+	mat<B>::mat(const std::vector<B> &vec, int x, int y) : y_s(y), x_s(x), m(x)
 	{
-		m = std::vector<std::vector<B>>(y);
 		int j = 0;
 		int k = 0;
 		for(auto& i : m)
 		{
-			i = std::vector<B>(x);
+			i = std::vector<B>(y);
 		}
 		for(int i = 0;i < y*x;i++)
 		{
-			m[j][k] = vec[i];
+			m[k][j] = vec[i];
 			j++;
 			if(j == y)
 			{
@@ -241,24 +238,24 @@ namespace MM
 	mat<A> getSoftmax(const mat<A> &o)
 	{
 		mat<A> softmaxed(o);
-		for(auto& in_column : softmaxed.m)
+		for(int i = 0;i<softmaxed.columns();i++)
 		{
 			double sum = 0;
-			for(size_t i = 0;i < o.rows();i++)
+			for(int j = 0;j < softmaxed.rows();i++)
 			{
-				double j = std::exp(in_column[i]);
-				sum+=j;
+				double k = std::exp(softmaxed[i][j]);
+				sum+=k;
 			}
     		
-    			for(size_t i = 0;i<o.rows();++i)
+    			for(size_t j = 0;i<o.rows();++j)
     			{
-    			    in_column[i] = std::exp(in_column[i])/sum;
+    			    softmaxed[i][j] = std::exp(softmaxed[i][j])/sum;
     			}
 			//Check for a nan-value, and change it to 1 if one is found
-			for(auto& i : in_column)
+			for(int j = 0;j<softmaxed.rows();j++)
 			{
-				if(isnan(i))
-					i = 1;
+				if(isnan(softmaxed[i][j]))
+					softmaxed[i][j] = 1;
 			}
 		}
 		return softmaxed;
@@ -340,10 +337,14 @@ namespace MM
 	{
 		x_s = matrix.columns();
 		y_s = matrix.rows();
-		m = matrix.m;
-		for(int i = 0;i < y_s;i++)
+		m.clear();
+		m.assign(x_s, std::vector<B>(y_s));
+		for(int i = 0;i < x_s;i++)
 		{
-			m[i] = matrix[i];
+			for(int j = 0;j<y_s;j++)
+			{
+				m[i][j] = matrix[i][j];
+			}
 		}
 		return *this;
 	}
@@ -351,7 +352,6 @@ namespace MM
 	template<typename B>
 	mat<B>::mat(int layersize) : y_s(layersize), x_s(0)
 	{
-		m = std::vector<std::vector<B>>(layersize);
 	}
 
 	template<typename B>
@@ -470,12 +470,12 @@ namespace MM
 	{
 		x_s = original.columns();
 		y_s = original.rows();
-		std::vector<std::vector<B>> new_m(y_s);
-		for(int i = 0;i < y_s;i++)
+		std::vector<std::vector<B>> new_m(x_s);
+		for(int i = 0;i < x_s;i++)
 		{
-			std::vector<B> new_row(x_s);
-			new_m[i] = new_row;
-			for(int j = 0;j < x_s;j++)
+			std::vector<B> new_column(y_s);
+			new_m[i] = new_column;
+			for(int j = 0;j < y_s;j++)
 			{
 				new_m[i][j] = original.m[i][j];
 			}
@@ -484,11 +484,16 @@ namespace MM
 	}
 
 	template<typename B>
-	mat<B>::mat(const std::vector<std::vector<B>> &mcopy) : x_s(mcopy[0].size()), y_s(mcopy.size()), m(mcopy)
+	mat<B>::mat(const std::vector<std::vector<B>> &mcopy) : x_s(mcopy.size()), y_s(mcopy[0].size()), m(mcopy.size())
 	{
-		for(int i = 0;i<y_s;i++)
+		for(int i = 0;i<x_s;i++)
 		{
-			m[i] = mcopy[i];
+			std::vector<B> newcolumn(y_s);
+			m[i] = newcolumn;
+			for(int j = 0;j<y_s;j++)
+			{
+				m[i][j] = mcopy[i][j];
+			}
 		}
 	}
 
