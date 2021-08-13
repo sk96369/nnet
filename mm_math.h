@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 #include <math.h>
+#include <cfloat>
 
 namespace MM
 {
@@ -86,14 +87,16 @@ namespace MM
 		}
 		
 		mat<double> newmatrix((double)0.0, right.columns(), left.rows());
-		std::cout << "newmatrix: " << newmatrix.m.size() << " " << newmatrix.m[0].size() << std::endl;
-		for(int i = 0;i<newmatrix.rows();i++)
+//		std::cout << "left matrix: " << left.m.size() << " " << left.m[0].size() << std::endl;
+//		std::cout << "right matrix: " << right.m.size() << " " << right.m[0].size() << std::endl;
+//		std::cout << "newmatrix: " << newmatrix.m.size() << " " << newmatrix.m[0].size() << std::endl;
+		for(int i = 0;i<newmatrix.m.size();i++)
 		{
-			for(int j = 0;j<newmatrix.columns();j++)
+			for(int j = 0;j<newmatrix.m[0].size();j++)
 			{
-				for(int k = 0;k < left.columns();k++)
+				for(int k = 0;k < left.m.size();k++)
 				{
-					newmatrix.m[j][i] += (double)left.m[k][i] * (double)right.m[j][k];
+					newmatrix.m[i][j] += (double)left.m[k][j] * (double)right.m[i][k];
 			//		std::cout << newmatrix.m[i][j] << " ";     //TESTOUTPUT
 				}
 				
@@ -117,9 +120,9 @@ namespace MM
 		if(left.rows() == right.rows() && left.columns() == right.columns())
 		{
 			mat<double> product(left);
-			for(int i = 0;i<left.rows();i++)
+			for(int i = 0;i<left.columns();i++)
 			{
-				for(int j = 0;j<left.columns();j++)
+				for(int j = 0;j<left.rows();j++)
 				{
 					product.m[i][j] *= (double)right.m[i][j];
 				}
@@ -196,21 +199,21 @@ namespace MM
 	template<typename B>
 	void mat<B>::transpose()
 	{
-		std::vector<std::vector<B>> newm(x_s);
-		for(int i = 0;i < x_s;i++)
+		std::vector<std::vector<B>> newm(y_s);
+		for(int i = 0;i < y_s;i++)
 		{
-			newm[i] = std::vector<B>(y_s);
+			newm[i] = std::vector<B>(x_s);
 		}
-		for(int i = 0;i < x_s;i++)
+		for(int i = 0;i < y_s;i++)
 		{
-			for(int j = 0;j < y_s;j++)
+			for(int j = 0;j < x_s;j++)
 			{
 				newm[i][j] = m[j][i];
 			}
 		}
 		m = newm;
-		x_s = newm[0].size();
-		y_s = newm.size();
+		y_s = newm[0].size();
+		x_s = newm.size();
 	}
 
 	template<typename B>
@@ -241,13 +244,12 @@ namespace MM
 		for(int i = 0;i<softmaxed.columns();i++)
 		{
 			double sum = 0;
-			for(int j = 0;j < softmaxed.rows();i++)
+			for(int j = 0;j < softmaxed.rows();j++)
 			{
-				double k = std::exp(softmaxed[i][j]);
-				sum+=k;
+				sum += std::exp(softmaxed[i][j]);
 			}
     		
-    			for(size_t j = 0;i<o.rows();++j)
+    			for(int j = 0;j<softmaxed.rows();j++)
     			{
     			    softmaxed[i][j] = std::exp(softmaxed[i][j])/sum;
     			}
@@ -255,7 +257,10 @@ namespace MM
 			for(int j = 0;j<softmaxed.rows();j++)
 			{
 				if(isnan(softmaxed[i][j]))
+				{
+//					std::cout << "nan detected " << sum << std::endl << std::cin.get();
 					softmaxed[i][j] = 1;
+				}
 			}
 		}
 		return softmaxed;
@@ -272,9 +277,9 @@ namespace MM
 			double sum = 0.0;
 			for(int j = 0;j<original.columns();j++)
 			{
-				sum+=original.m[i][j];
+				sum+=original.m[j][i];
 			}
-			collapsed.m[i][0] = sum;
+			collapsed.m[0][i] = sum;
 		}
 		return collapsed;
 	}
@@ -316,7 +321,7 @@ namespace MM
 		{
 			for(int j = 0;j<error.rows();j++)
 			{
-				error.m[j][i] = (double)left.m[j][i] - right.m[j][i];
+				error.m[i][j] = (double)left.m[i][j] - right.m[i][j];
 			}
 		}
 		return error;
@@ -355,13 +360,12 @@ namespace MM
 	}
 
 	template<typename B>
-	mat<B>::mat(const mat<B> &o) : y_s(o.rows()), x_s(o.columns())
+	mat<B>::mat(const mat<B> &o) : y_s(o.rows()), x_s(o.columns()), m(std::vector<std::vector<B>>(x_s))
 	{
-		m = std::vector<std::vector<B>>(y_s);
-		for(int i = 0;i < o.y_s;i++)
+		for(int i = 0;i < x_s;i++)
 		{
-			m[i] = std::vector<B>(x_s);
-			for(int j = 0;j < x_s;j++)
+			m[i] = std::vector<B>(y_s);
+			for(int j = 0;j < y_s;j++)
 			{
 				m[i][j] = o.m[i][j];
 				
@@ -394,11 +398,11 @@ namespace MM
 		mat<double> sum_matrix(left);
 		if(right.rows() == left.rows() && right.columns() == 1);
 		{
-			for(int i = 0;i<left.rows();i++)
+			for(int i = 0;i<left.columns();i++)
 			{
-				for(int j = 0;j<left.columns();j++)
+				for(int j = 0;j<left.rows();j++)
 				{
-					sum_matrix[i][j] += right[i][0];
+					sum_matrix[i][j] += right[0][i];
 				}
 			}
 			return sum_matrix;

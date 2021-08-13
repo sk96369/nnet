@@ -25,7 +25,7 @@ namespace MM
 		}
 		for(int i = 0;i<size;i++)
 		{
-			mat<double> newweight(-0.5, 0.5, getLayer(i-1).size(), getLayer(i).size());
+			mat<double> newweight(-0.5, 0.5, getLayer(i-1).rows(), getLayer(i).rows());
 			weights[i] = newweight;
 		}
 		for(int i = 0;i<size;i++)
@@ -56,12 +56,15 @@ namespace MM
 			fprop();
 
 			//Print outputs
+			std::cout << "Outputs after batch " << i << ":\n";
 			std::vector<int> vec = onehot_toInt(getOutput(1));
 			for(int ptr = 0;ptr < vec.size();ptr++)
 			{
-				std::cout << vec[ptr] << " ";
+				std::cout << vec[ptr] << " - Target output: " << labelbatch[ptr] << std::endl;
 			}
 			std::cout << std::endl;
+
+//			std::cin.get();
 
 			//Backpropagate
 			std::cout << "Bprop:\n";
@@ -83,12 +86,10 @@ namespace MM
 		int i = 0;
 		for(;i<size-1;i++)
 		{
-			std::cout << "Layer " << i << " mm\n";
 			getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
 			getOutput(i).newValues(getRelu(getLayer(i)));
 
 		}
-			std::cout << "Layer " << i << " mm\n";
 		getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
 		getOutput(i).newValues(getSoftmax(getLayer(i)));
 	}
@@ -100,34 +101,39 @@ namespace MM
 
 	void nnet::bprop(const std::vector<int> &labels)
 	{
-		int i = size-1;
 		std::vector<mat<double>> weights_delta(size);
 		std::vector<mat<double>> biases_delta(size);
-		mat<double> target_output(int_toOneHot(labels, outputs[size-1].size()));
+		mat<int> target_output(int_toOneHot(labels, getOutput().rows()));
+		mat<double> delta = getError(target_output, outputs[size-1]);
+		double scalar = (double)1/(double)input_normalized.columns();
 
-		mat<double> delta = getError(target_output, outputs[i]);
+//		std::cout << "Weights at i = 0: " << weights[0].toString() << std::endl;
+//		std::cout << "Weights at i = 1: " << weights[1].toString() << std::endl << std::endl;
+//		std::cout << "Target output " << target_output.toString() << std::endl;
+//		std::cout << "Prediction: " << getOutput().toString() << std::endl;
+		std::cout << "Delta[1]: " << delta.toString() << std::endl;
 
-		std::cout << target_output.toString() << std::endl;
-		std::cout << getOutput().toString() << std::endl;
-		std::cout << delta.toString() << std::endl;
-
-		weights_delta[i] = (mm(scalar_m(delta, 1/delta.columns()), getTranspose(outputs[i])));
-		biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
-
+//		std::cout << "Biases delta[1]: " << biases_delta[i].toString() << std::endl << std::endl;
+//		std::cout << "Weights delta[1]: " << weights_delta[i].toString() << std::endl << std::endl;
 //		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
 //		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());
 
-		for(i--;i>=0;i--)
+		for(int i = size-1;i>=0;i--)
 		{
-			delta.newValues(hadamard(mm(getTranspose(weights[i+1]), delta), drelu(getLayer(i))));
-			weights_delta[i] = mm(scalar_m(delta, 1/delta.columns()),
-						getTranspose(getLayer(i-1)));
-			biases_delta[i] = (sum_m(scalar_m(delta, 1/delta.columns())));
+			weights_delta[i] = mm(scalar_m(delta, scalar),
+						getTranspose(getOutput(i-1)));
+			biases_delta[i] = sum_m(scalar_m(delta, scalar));
+			std::cout << std::endl << biases_delta[i].toString() << std::endl;
+
+			delta.newValues(hadamard(mm(getTranspose(weights[i]), delta), drelu(getLayer(i-1))));
 
 //		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
 //		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());
 
 		}
+//		std::cout << "Delta[0]: " << delta.toString() << std::endl << std::endl;
+//		std::cout << "Weights delta[0]: " << weights_delta[0].toString() << std::endl << std::endl;
+		std::cin.get();
 		updateParameters(weights_delta, biases_delta);
 	}
 
@@ -135,8 +141,8 @@ namespace MM
 	{
 		for(int i = 0;i<size;i++)
 		{
-			weights[i].newValues(getError(weights_delta[i], scalar_m(weights_delta[i], learningrate)));
-			biases[i].newValues(getError(biases_delta[i], scalar_m(biases_delta[i], learningrate)));
+			weights[i].newValues(getError(weights[i], scalar_m(weights_delta[i], learningrate)));
+			biases[i].newValues(getError(biases[i], scalar_m(biases_delta[i], learningrate)));
 		}
 	}
 
@@ -194,7 +200,7 @@ namespace MM
 		{
 			for(int i = 0;i<size;i++)
 			{
-				file << biases[i].toString() << weights[i].toString();
+				file << "biases" << i <<  biases[i].toString() << "/weights" << i << weights[i].toString() << "/";
 			}
 		}
 		file.close();

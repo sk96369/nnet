@@ -6,7 +6,7 @@
 //Constants  ---PLACEHOLDER FOR USER INPUT---
 const int EPOCH = 1;
 const int DATASIZE = 60000;
-const int BATCHSIZE = 500;
+const int BATCHSIZE = 2000;
 const int IMAGESIZE = 784;
 const int IMAGEWIDTH = 28;
 const int FEATURES_MAXVALUE = 255;
@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 	/* train test */
 	network.train(images, labels, BATCHSIZE, IMAGESIZE, IMAGEWIDTH, DATASIZE, EPOCH);
 
+	std::cout << "Final network output:\n" << network.getOutput().toString() << std::endl;
 	network.saveModel(argv[1]);
 	return 0;
 }

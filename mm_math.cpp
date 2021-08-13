@@ -36,12 +36,12 @@ namespace MM
 	*/
 	mat<double> getNormalized(const mat<int> &original, int feature_max)
 	{
-		std::vector<std::vector<double>> new_m(original.rows());
-		for(int i = 0;i < original.rows();i++)
+		std::vector<std::vector<double>> new_m(original.columns());
+		for(int i = 0;i < original.columns();i++)
 		{
-			std::vector<double> new_row(original.columns());
-			new_m[i] = new_row;
-			for(int j = 0;j < original.columns();j++)
+			std::vector<double> new_column(original.rows());
+			new_m[i] = new_column;
+			for(int j = 0;j < original.rows();j++)
 			{
 				new_m[i][j] = (double)original[i][j] / (double)feature_max;
 			}
@@ -52,6 +52,7 @@ namespace MM
 
 	mat<double> scalar_m(const mat<double> &original, double scalar)
 	{
+//		std::cout << "Scalar product original: " << original.toString() << std::endl << "Scalar value: " << scalar << std::endl;
 		mat<double> product(original);
 		for(auto& i : product.m)
 		{
@@ -60,6 +61,8 @@ namespace MM
 				j *= scalar;
 			}
 		}
+//		std::cout << "Scalar product test: " << product.toString() << std::endl;
+//		std::cin.get();
 		return product;
 	}
 }

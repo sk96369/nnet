@@ -48,11 +48,12 @@ MM::mat<int> int_toOneHot(const std::vector<B> &in, int max)
 	for(int i = 0;i<columns;i++)
 	{
 		//Sets the element at in[i] to 1
-		onehot.m[(int)in[i]][i] = 1;
+		onehot.m[i][(int)in[i]] = 1;
 	}
 	return onehot;
 }
 
+/*
 //List of integers into a one-hot-encoded double matrix
 MM::mat<double> int_toOneHot(const std::vector<int> &in, int max)
 {
@@ -66,7 +67,7 @@ MM::mat<double> int_toOneHot(const std::vector<int> &in, int max)
 	}
 	return onehot;
 }
-
+*/
 template<typename B>
 std::vector<int> onehot_toInt(const MM::mat<B> &oh)
 {
@@ -78,7 +79,7 @@ std::vector<int> onehot_toInt(const MM::mat<B> &oh)
 		int max = 0;
 		for(int j = 0;j<rows;j++)
 		{
-			if(oh.m[j][i] > oh.m[max][i])
+			if(oh.m[i][j] > oh.m[i][max])
 			{
 				max = j;
 			}
