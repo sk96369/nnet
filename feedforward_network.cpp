@@ -51,12 +51,13 @@ namespace MM
 			labelbatch.assign(label_start, label_end);
 			//Propagate forward
 			setInput(imagebatch);
-			
+			for(int j = 0;j<2;j++)
+			{
 			std::cout << "Fprop:\n";
 			fprop();
 
 			//Print outputs
-			std::cout << "Outputs after batch " << i << ":\n";
+			std::cout << "Outputs after batch " << i << ":\n" << getOutput().toString() << std::endl;
 			std::vector<int> vec = onehot_toInt(getOutput(1));
 			for(int ptr = 0;ptr < vec.size();ptr++)
 			{
@@ -70,6 +71,7 @@ namespace MM
 			std::cout << "Bprop:\n";
 			bprop(labelbatch);
 
+			}
 			//Move the iterators
 			image_start += batchsize*imagesize;
 			label_start += batchsize;
@@ -111,7 +113,7 @@ namespace MM
 //		std::cout << "Weights at i = 1: " << weights[1].toString() << std::endl << std::endl;
 //		std::cout << "Target output " << target_output.toString() << std::endl;
 //		std::cout << "Prediction: " << getOutput().toString() << std::endl;
-		std::cout << "Delta[1]: " << delta.toString() << std::endl;
+//		std::cout << "Delta[1]: " << delta.toString() << std::endl;
 
 //		std::cout << "Biases delta[1]: " << biases_delta[i].toString() << std::endl << std::endl;
 //		std::cout << "Weights delta[1]: " << weights_delta[i].toString() << std::endl << std::endl;
@@ -120,12 +122,16 @@ namespace MM
 
 		for(int i = size-1;i>=0;i--)
 		{
+			if(i < size-1)
+			{
+				delta.newValues(hadamard(mm(getTranspose(weights[i+1]), delta),
+							drelu(getLayer(i))));
+			}
 			weights_delta[i] = mm(scalar_m(delta, scalar),
 						getTranspose(getOutput(i-1)));
 			biases_delta[i] = sum_m(scalar_m(delta, scalar));
 			std::cout << std::endl << biases_delta[i].toString() << std::endl;
 
-			delta.newValues(hadamard(mm(getTranspose(weights[i]), delta), drelu(getLayer(i-1))));
 
 //		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
 //		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());

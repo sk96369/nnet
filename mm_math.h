@@ -7,6 +7,8 @@
 #include <vector>
 #include <math.h>
 #include <cfloat>
+#include <iomanip>
+#include <sstream>
 
 namespace MM
 {
@@ -68,7 +70,12 @@ namespace MM
 		void relu();
 
 		//toString implementation
-		std::string toString() const;
+		//prints each column horizontally, printed with the given precision value
+		//-1 means the precision is not changed
+		std::string toString(int precision = -1) const;
+		//prints each row horizontally, with possible floating point
+		//values printed with the given precision value
+		std::string toStringFlipped(int precision = 0) const;
 
 		//Assignment operator
 		mat<A> & operator=(const mat& matrix);
@@ -119,12 +126,12 @@ namespace MM
 	{
 		if(left.rows() == right.rows() && left.columns() == right.columns())
 		{
-			mat<double> product(left);
+			mat<double> product(0.0, left.columns(), left.rows());
 			for(int i = 0;i<left.columns();i++)
 			{
 				for(int j = 0;j<left.rows();j++)
 				{
-					product.m[i][j] *= (double)right.m[i][j];
+					product.m[i][j] = (double)left.m[i][j] * (double)right.m[i][j];
 				}
 			}
 			return product;
@@ -178,24 +185,7 @@ namespace MM
 			}
 		}
 	}
-/*	
-	template <typename A>
-	mat<A>::mat(const mat &original) : x_s(original.columns()), y_s(original.rows())
-	{
-		std::cout << "asd" << original.m.size() << " " << original.m[0].size() << std::endl;
-		m = std::vector<std::vector<A>>(y_s);
-		for(int i = 0;i < y_s;i++)
-		{
-			std::vector<A> newline(original.columns());
-			for(int j = 0;j<x_s;j++)
-			{
-				newline[j] = original.m[i][j];
-			}
-			m[i] = newline;
-		}
-		std::cout << rows() << " " << columns() << std::endl;
-	}
-*/
+
 	template<typename B>
 	void mat<B>::transpose()
 	{
@@ -236,6 +226,39 @@ namespace MM
 		}
 		return vec;
 	}
+
+	template<typename A>
+	mat<A> softmax(const mat<A> &o)
+	{
+		mat<A> softmaxed(o);
+		double sum = 0;
+		for(int i = 0;i<softmaxed.columns();i++)
+		{
+			for(int j = 0;j < softmaxed.rows();j++)
+			{
+				sum += std::exp(softmaxed[i][j]);
+			}
+		}
+
+    		for(int i = 0;i<softmaxed.columns();i++)
+		{
+    			for(int j = 0;j<softmaxed.rows();j++)
+    			{
+    			    softmaxed[i][j] = std::exp(softmaxed[i][j])/sum;
+    			}
+			//Check for a nan-value, and change it to 1 if one is found
+			for(int j = 0;j<softmaxed.rows();j++)
+			{
+				if(isnan(softmaxed[i][j]))
+				{
+//					std::cout << "nan detected " << sum << std::endl << std::cin.get();
+					softmaxed[i][j] = 1;
+				}
+			}
+		}
+		return softmaxed;
+	}
+
 
 	template<typename A>
 	mat<A> getSoftmax(const mat<A> &o)
@@ -298,13 +321,15 @@ namespace MM
 	}
 
 	template <typename B>
-	mat<B> drelu(const mat<B> &matrix)
+	mat<int> drelu(const mat<B> &matrix)
 	{
-		mat<B> derivatives(matrix);
-		for(auto& i : derivatives.m)
+		mat<int> derivatives(0, matrix.columns(), matrix.rows());
+		for(int i = 0;i<derivatives.columns();i++)
 		{
-			for(auto& j : i)
-				j = j > 0;
+			for(int j = 0;j<derivatives.rows();j++)
+			{
+				derivatives[i][j] = matrix[i][j] > 0;
+			}
 		}
 		return derivatives;
 	}
@@ -374,20 +399,36 @@ namespace MM
 	}
 
 	template<typename B>
-	std::string mat<B>::toString() const
+	std::string mat<B>::toString(int precision) const
 	{
-		std::string str = "";
+		std::stringstream ss;
+		if(precision >= 0)
+			ss << std::fixed << std::setprecision(precision);
 		for(auto& i : m)
 		{
 			for(auto& j : i)
 			{
-				str += std::to_string(j);
-				str += " ";
+				ss << j << " ";
 			}
-			str.pop_back();
-			str.append("\n");
+			ss << "\n";
 		}
-		return str;
+		return ss.str();
+	}
+
+	template<typename B>
+	std::string mat<B>::toStringFlipped(int precision) const
+	{
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(precision);
+		for(int i = 0;i<y_s;i++)
+		{
+			for(int j = 0;j<x_s;j++)
+			{
+				ss << m[j][i] << " ";
+			}
+			ss << "\n";
+		}
+		return ss.str();
 	}
 
 	//Function that copies the left matrix, then adds each the value from right
@@ -402,7 +443,7 @@ namespace MM
 			{
 				for(int j = 0;j<left.rows();j++)
 				{
-					sum_matrix[i][j] += right[0][i];
+					sum_matrix[i][j] += right[0][j];
 				}
 			}
 			return sum_matrix;
@@ -430,9 +471,9 @@ namespace MM
 	void mat<B>::newValues(const std::vector<B> &vec)
 	{
 		x_s = vec.size() / y_s;
-		for(int i = 0;i<y_s;i++)
+		for(int i = 0;i<x_s;i++)
 		{
-			m[i] = std::vector<B>(x_s);
+			m[i] = std::vector<B>(y_s);
 		}
 		for(int i = 0;i<x_s;i++)
 		{
