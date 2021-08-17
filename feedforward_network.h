@@ -56,9 +56,13 @@ namespace MM
 		void train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int imagewidth, int datasize, int epoch);
 		//Creates a new normalized input based on the given vector
 		void setInput(const std::vector<int> &newinput);
-
+		//Function that sets the given vector as input, propagates the data forward and
+		//returns predicted labels as a vector
+		std::vector<int> predict(const std::vector<int> &data);
 		//Saves the trained parameters to a file named "filename".txt
 		int saveModel(std::string filename);
+		//Loads the trained parameters from a file named "filename".txt
+		void loadModel(std::string filename);
 
 		/* Getters, setters
 		 */

@@ -5,9 +5,9 @@
 #include <iomanip>
 
 //Constants  ---PLACEHOLDER FOR USER INPUT---
-const int EPOCH = 1;
+const int EPOCH = 100;
 const int DATASIZE = 60000;
-const int BATCHSIZE = 500;
+const int BATCHSIZE = 3000;
 const int IMAGESIZE = 784;
 const int IMAGEWIDTH = 28;
 const int FEATURES_MAXVALUE = 255;
@@ -17,6 +17,7 @@ const int FEATURES_MAXVALUE = 255;
 
 int main(int argc, char *argv[])
 {
+	
 TEST;
 	std::vector<int> dimensions = {IMAGESIZE, 10, 10}; //READ FROM INPUT
 
@@ -31,7 +32,7 @@ TEST;
 		std::cout << i << " ";
 	}
 	std::cout << "\n";
-
+/*
 	MM::mat<int> a(1, 5, 10);
 	MM::mat<int> b(1, 10, 20);
 	MM::mat<int> c(1, 10, 5);
@@ -128,12 +129,28 @@ TEST;
 	std::cout << "weight2:\n"<< weight2.toString() << std::endl;
 	std::cout << "h2:\n"<< h2.toString() << std::endl;
 	std::cin.get();
-}
+}*/
 
+//	std::vector<int> inputvector = {0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1};	
+//	std::vector<int> labels = {1, 0, 0, 0, 0, 0, 1, 1};
+//	std::vector<int> dimensions = {4, 2};
+//	MM::nnet network(dimensions, 1);
+//	network.train(inputvector, labels, 7, 4, 4, 7, 100);
+
+//	network.saveModel("7x4");
 	/* train test */
-//	network.train(images, labels, BATCHSIZE, IMAGESIZE, IMAGEWIDTH, DATASIZE, EPOCH);
+	network.train(images, labels, BATCHSIZE, IMAGESIZE, IMAGEWIDTH, DATASIZE, EPOCH);
 
-//	std::cout << "Final network output:\n" << network.getOutput().toString() << std::endl;
-//	network.saveModel(argv[1]);
+	std::vector<int> eval_images = readmnistgz("eval_images", ".gz");
+	std::vector<int> eval_labels = readmnistgz("eval_labels", ".gz");
+	std::vector<int> predictions = network.predict(eval_images);
+
+	for(int i = 0;i<eval_labels.size();i++)
+	{
+		std::cout << "Prediction: " << predictions[i] << " - Ground truth: " << eval_labels[i] << std::endl;
+	}
+std::cout << std::endl;
+
+	network.saveModel(argv[1]);
 	return 0;
 }

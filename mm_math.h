@@ -231,29 +231,16 @@ namespace MM
 	mat<A> softmax(const mat<A> &o)
 	{
 		mat<A> softmaxed(o);
-		double sum = 0;
 		for(int i = 0;i<softmaxed.columns();i++)
 		{
+			double sum = 0;
 			for(int j = 0;j < softmaxed.rows();j++)
 			{
 				sum += std::exp(softmaxed[i][j]);
 			}
-		}
-
-    		for(int i = 0;i<softmaxed.columns();i++)
-		{
-    			for(int j = 0;j<softmaxed.rows();j++)
-    			{
-    			    softmaxed[i][j] = std::exp(softmaxed[i][j])/sum;
-    			}
-			//Check for a nan-value, and change it to 1 if one is found
 			for(int j = 0;j<softmaxed.rows();j++)
 			{
-				if(isnan(softmaxed[i][j]))
-				{
-//					std::cout << "nan detected " << sum << std::endl << std::cin.get();
-					softmaxed[i][j] = 1;
-				}
+				softmaxed[i][j] = std::exp(softmaxed[i][j]) / sum;
 			}
 		}
 		return softmaxed;

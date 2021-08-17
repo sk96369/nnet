@@ -39,39 +39,26 @@ namespace MM
 	{
 		std::vector<int> imagebatch;
 		std::vector<int> labelbatch;
+		std::cout << "Starting training with batch size: " << batchsize << ", epochs: " << epoch << "\n";
+		for(int i = 0;i<epoch;i++)
+		{
 		auto image_start = images.begin();
 		auto image_end = images.begin() + batchsize*imagesize;
 		auto label_start = labels.begin();
 		auto label_end = labels.begin() + batchsize;
 
-		int iterations = (epoch * datasize) / batchsize;
-		for(int i = 0;i<iterations;i++)
+		int iterations = datasize / batchsize;
+		for(int j = 0;j<iterations;j++)
 		{
 			imagebatch.assign(image_start, image_end);
 			labelbatch.assign(label_start, label_end);
 			//Propagate forward
 			setInput(imagebatch);
-			for(int j = 0;j<2;j++)
-			{
-			std::cout << "Fprop:\n";
 			fprop();
 
-			//Print outputs
-			std::cout << "Outputs after batch " << i << ":\n" << getOutput().toString() << std::endl;
-			std::vector<int> vec = onehot_toInt(getOutput(1));
-			for(int ptr = 0;ptr < vec.size();ptr++)
-			{
-				std::cout << vec[ptr] << " - Target output: " << labelbatch[ptr] << std::endl;
-			}
-			std::cout << std::endl;
-
-//			std::cin.get();
-
 			//Backpropagate
-			std::cout << "Bprop:\n";
 			bprop(labelbatch);
 
-			}
 			//Move the iterators
 			image_start += batchsize*imagesize;
 			label_start += batchsize;
@@ -80,6 +67,8 @@ namespace MM
 				image_end += batchsize*imagesize;
 				label_end += batchsize;
 			}
+			std::cout << "Epoch: " << i << " - Iteration: " << j << std::endl;
+		}
 		}
 	}
 
@@ -106,7 +95,7 @@ namespace MM
 		std::vector<mat<double>> weights_delta(size);
 		std::vector<mat<double>> biases_delta(size);
 		mat<int> target_output(int_toOneHot(labels, getOutput().rows()));
-		mat<double> delta = getError(target_output, outputs[size-1]);
+		mat<double> delta = getError(outputs[size-1], target_output);
 		double scalar = (double)1/(double)input_normalized.columns();
 
 //		std::cout << "Weights at i = 0: " << weights[0].toString() << std::endl;
@@ -130,7 +119,7 @@ namespace MM
 			weights_delta[i] = mm(scalar_m(delta, scalar),
 						getTranspose(getOutput(i-1)));
 			biases_delta[i] = sum_m(scalar_m(delta, scalar));
-			std::cout << std::endl << biases_delta[i].toString() << std::endl;
+//			std::cout << std::endl << biases_delta[i].toString() << std::endl;
 
 
 //		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
@@ -139,7 +128,7 @@ namespace MM
 		}
 //		std::cout << "Delta[0]: " << delta.toString() << std::endl << std::endl;
 //		std::cout << "Weights delta[0]: " << weights_delta[0].toString() << std::endl << std::endl;
-		std::cin.get();
+//		std::cin.get();
 		updateParameters(weights_delta, biases_delta);
 	}
 
@@ -211,5 +200,13 @@ namespace MM
 		}
 		file.close();
 		return 0;
+	}
+		
+	std::vector<int> nnet::predict(const std::vector<int> &data)
+	{
+		setInput(data);
+		fprop();
+		std::vector<int> predictions = onehot_toInt(getOutput());
+		return predictions;
 	}
 }
