@@ -14,6 +14,8 @@ using namespace std;
 //Function for reading the MNIST training data, and returning it in a vector
 vector<int> readmnistgz(string filename, string extension)
 {
+	const char *progress = "-\\|/";
+	
 	std::vector<int> inint;
 	filename.append(extension);
 	int numberofitems;
@@ -111,9 +113,16 @@ vector<int> readmnistgz(string filename, string extension)
 		std::cout << nextint << std::endl;
 	}
 	unsigned char* buffer = new unsigned char[numberofitems*sizeofitems];
-	instream.read((char*)buffer, numberofitems*sizeofitems); 
+	instream.read((char*)buffer, numberofitems*sizeofitems);
 	for(int i = 0;i<numberofitems*sizeofitems;i++)
 	{
+		int rotation = 0;
+		if(i%100 == 0)
+		{
+			std::cout << "Reading data from file " << filename << extension << " " << progress[rotation % 4] << "\r";
+			rotation++;
+		}
+		std::cout << "Data read from file " << filename << extension << ".\n";
 		inint.push_back(static_cast<int>(buffer[i]));
 	}
 	delete[] buffer;

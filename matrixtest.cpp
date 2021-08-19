@@ -4,153 +4,127 @@
 #include <vector>
 #include <iomanip>
 
-//Constants  ---PLACEHOLDER FOR USER INPUT---
-const int EPOCH = 100;
-const int DATASIZE = 60000;
-const int BATCHSIZE = 3000;
-const int IMAGESIZE = 784;
-const int IMAGEWIDTH = 28;
-const int FEATURES_MAXVALUE = 255;
+//Constants
 
 #define PRECISION(VAL) std::fixed << std::setprecision(VAL)
 #define TEST std::cout << "test!" << std::endl
 
 int main(int argc, char *argv[])
 {
+	//User inputs
+	int user_input_c = argc - 1;
+	std::vector<std::string> user_input(user_input_c);
+	for(int i = 1;i<user_input_c;i++)
+	{
+		user_input[i-1] = std::string(argv[i]);
+	}
+	std::string modelName;
+	int epoch = -1;
+	int batchsize = -1;
+	int features_maxvalue = -1;
+	int layersize = -1;
+	bool quit = 0;
+
+	while(!quit)
+	{
+		if(user_input_c > 0 && (user_input[0] == "tnm" || user_input[0] == "trainnewmodel"))
+		{
+			if(user_input_c > 6)
+			{
+				std::stringstream ss;
+				modelName = user_input[1];
+				ss << user_input[2] << " " << user_input[3] << " " << user_input[4];
+				if(ss >> batchsize)
+					std::cout << "Batch size: " << batchsize << "\n";
+				else
+				{
+					std::cout << "No integer found for batch size, exiting...\n";
+					exit(1);
+				}
+				if(ss >> epoch)
+					std::cout << "Training epochs: " << epoch << "\n";
+				else
+				{
+					std::cout << "No integer found for training epoch count, exiting...\n";
+					exit(1);
+				}
+				if(ss >> features_maxvalue)
+					std::cout << "Max value of pixel in training data: " << features_maxvalue << "\n";
+				else
+				{
+					std::cout << "No integer found for batch size, exiting...\n";
+					exit(1);
+				}
 	
-TEST;
-	std::vector<int> dimensions = {IMAGESIZE, 10, 10}; //READ FROM INPUT
+				//Read the sizes of the hidden layers
+				std::vector<int> dimensions(user_input_c-6);
+				for(int i = 6;i<user_input_c;i++)
+				{
+					ss << user_input[i];
+					if(ss >> dimension)
+					{
+						if(dimension < 1)
+						{
+							std::cout << "Dimension size must be greater than 0. Exiting...\n";
+							exit(1);
+						}
+						dimensions[i-6] = dimension;
+					else
+					{
+						std::cout << "Could not read size of hidden layer " << i-6 << ". Exiting...\n";
+						exit(1);
+					}
+				}
+	
+	
+				std::vector<int> images = readmnistgz("imagedata");
+				std::vector<int> labels = readmnistgz("traininglabels");
+				int inputsize = images.size()/labels.size();
+				dimensions.push_front(inputsize);
+	
+				MM::nnet network(dimensions, features_maxvalue);
+				if(batchsize > labels.size())
+					batchsize = labels.size();
+				network.train(images, labels, batchsize, inputsize, labels.size(), EPOCH);
+				network.saveModel(user_input[1]);
+			}
+			else
+			{
+				std::cout << "the trainnewmodel command requires the following arguments:\n
+					   trainnewmodel [model name] [batch size] [training epochs] [maximum pixel value] [size of layer z1] ... [size of layer zn (output layer)]\n";
+				exit(1);
+			}
+		
+		}
+		std::vector<int> eval_images;
+		std::vector<int> eval_labels;
+		if(strcmp(user_input[1], "predict") == 1)
+		{
+			if(user_input_c > 3)
+			{
+				eval_images = readmnistgz(std::string(user_input[2]), ".gz");
+				MM::nnet network(std::string(user_input[3]));
+				std::vector<int> predictions = network.predict(eval_images);
+				if(user_input_c > 4)
+				{
+					eval_labels = readmnistgz(std::string(user_input[4]), ".gz");
+					for(int i = 0;i<eval_labels.size();i++)
+					{
+						std::cout << "Prediction: " << predictions[i] << " - Ground truth: " << eval_labels[i] << std::endl;
+					}
+				}
+				else
+				{
+					for(int i = 0;i<eval_images.size()/;i++)
+					{
+						std::cout << "Prediction: " << predictions[i] << std::endl;
+					}
+				}
+				std::cout << std::endl;
+			}
+		}
+		//Read user input
 
-	std::vector<int> images = readmnistgz("imagedata");
-	std::vector<int> labels = readmnistgz("traininglabels");
-
-	MM::nnet network(dimensions, FEATURES_MAXVALUE);
-	std::vector<int> received_dimensions = network.getDimensions();
-	std::cout << "Network's dimensions: \n";
-	for(auto& i : received_dimensions)
-	{
-		std::cout << i << " ";
 	}
-	std::cout << "\n";
-/*
-	MM::mat<int> a(1, 5, 10);
-	MM::mat<int> b(1, 10, 20);
-	MM::mat<int> c(1, 10, 5);
-	MM::mat<double> d(1.0, 20, 10);
-	MM::mat<double> e(1.0, 10, 20);
-	MM::mat<double> f(5.0, 20, 10);
-	MM::mat<double> g;
-	std::cout << "test1\n";
-	g.newValues(mm(a, c));
-	std::cout << "test2\n";
-	printf("AC: %i %i\n", g.columns(), g.rows());
-	g.newValues(mm(b, a));
-	printf("BA: %i %i\n", g.columns(), g.rows());
-	g.newValues(mm(d, e));
-	printf("DE: %i %i\n", g.columns(), g.rows());
-	g.newValues(getError(f, d));
-	printf("F-D: %i %i\n", g.columns(), g.rows());
-
-	MM::mat<double> weight1(-1, 1, 10, 5);
-	MM::mat<double> input(0, 7, 10);
-	MM::mat<double> h1(0, 7, 5);
-	MM::mat<double> bias1(-0.1, 0.1, 1, 5);
-	MM::mat<double> weight2(-1, 1, 5, 3);
-	MM::mat<double> h2(0, 7, 3);
-	MM::mat<double> bias2(-0.1, 0.1, 1, 3);
-	MM::mat<double> output(0, 7, 3);
-
-	std::vector<double> input_vector;
-	for(int i = 1;i<71;i++)
-	{
-		input_vector.push_back(1/(double)i);
-	}
-
-	input.newValues(input_vector);
-	std::cout << "input:\n" << input.toString() << std::endl;
-	std::cout << "weight1:\n"<< weight1.toString() << std::endl;
-	std::cout << "h1:\n"<< h1.toString() << std::endl;
-	std::cout << "weight2:\n"<< weight2.toString() << std::endl;
-	std::cout << "h2:\n"<< h2.toString() << std::endl;
-
-	MM::mat<double> h1_biased;
-	MM::mat<double> relu;
-	MM::mat<double> h2_biased;
-
-	for(int i = 0;i<100;i++)
-	{
-	h1.newValues(MM::mm(weight1, input));
-	h1_biased = MM::add(h1, bias1);
-	relu = MM::getRelu(h1_biased);
-	h2.newValues(MM::mm(weight2, relu));
-	h2_biased = (MM::add(h2, bias2));
-	output.newValues(MM::getSoftmax(h2_biased));
-
-	std::cout << "input:\n" << input.toString(2) << std::endl;
-	std::cout << "weight1:\n" << weight1.toString(2) << std::endl;
-	std::cout << "h1:\n" << h1.toString(2) << std::endl;
-	std::cout << "h1 after adding bias:\n" << h1_biased.toString(2) << std::endl;
-	std::cout << "h1 after relu:\n" << relu.toString(2) << std::endl;
-	std::cout << "weight2:\n" <<weight2.toString(2) << std::endl;
-	std::cout << "h2:\n" << h2.toString(2) << std::endl;
-	std::cout << "h2 after adding bias:\n" << h2_biased.toString(2) << std::endl;
-	std::cout << "output after softmax\n" << output.toString(2) << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-
-	MM::mat<double> target(0, 7, 3);
-	for(int i = 0;i<7;i++)
-	{
-		target[i][1] = 1;
-	}
-	MM::mat<double> delta2(MM::getError(target, output));
-	MM::mat<double> deltaw2(MM::mm(MM::scalar_m(delta2, 1/(double)7), MM::getTranspose(relu)));
-	MM::mat<double> deltab2(MM::scalar_m(MM::sum_m(delta2), 1/(double)7));
-	MM::mat<double> delta1(MM::hadamard(MM::mm(MM::getTranspose(weight2), delta2), MM::drelu(h1_biased)));
-	MM::mat<double> deltaw1(MM::mm(MM::scalar_m(delta2, 1/(double)7), getTranspose(input)));
-	MM::mat<double> deltab1(MM::scalar_m(MM::sum_m(delta1), 1/(double)7));
-
-	std::cout << "delta2*(1/7):\n" << MM::scalar_m(delta2, 1/(double)7).toStringFlipped(4) << std::endl;
-	std::cout << "delta2:\n" << delta2.toStringFlipped(2) << std::endl;
-	std::cout << "relu transposed:\n" << MM::getTranspose(relu).toStringFlipped(2);
-
-	std::cout << "deltaw2:\n" << deltaw2.toString(4) << std::endl;
-	std::cout << "deltab2:\n" << deltab2.toString(4) << std::endl;
-	std::cout << "delta1:\n" << delta1.toString(4) << std::endl;
-	std::cout << "deltaw1:\n" << deltaw1.toString(4) << std::endl;
-	std::cout << "deltab1:\n" << deltab1.toString(4) << std::endl;
-
-	weight1.newValues(MM::getError(weight1, MM::scalar_m(deltaw1, 0.1)));
-	bias1.newValues(MM::getError(bias1, MM::scalar_m(deltab1, 0.1)));
-	weight2.newValues(MM::getError(weight2, MM::scalar_m(deltaw2, 0.1)));
-	bias2.newValues(MM::getError(bias2, MM::scalar_m(deltab2, 0.1)));
-
-	std::cout << "input:\n" << input.toString() << std::endl;
-	std::cout << "weight1:\n"<< weight1.toString() << std::endl;
-	std::cout << "h1:\n"<< h1.toString() << std::endl;
-	std::cout << "weight2:\n"<< weight2.toString() << std::endl;
-	std::cout << "h2:\n"<< h2.toString() << std::endl;
-	std::cin.get();
-}*/
-
-//	std::vector<int> inputvector = {0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1};	
-//	std::vector<int> labels = {1, 0, 0, 0, 0, 0, 1, 1};
-//	std::vector<int> dimensions = {4, 2};
-//	MM::nnet network(dimensions, 1);
-//	network.train(inputvector, labels, 7, 4, 4, 7, 100);
-
-//	network.saveModel("7x4");
-	/* train test */
-	network.train(images, labels, BATCHSIZE, IMAGESIZE, IMAGEWIDTH, DATASIZE, EPOCH);
-
-	std::vector<int> eval_images = readmnistgz("eval_images", ".gz");
-	std::vector<int> eval_labels = readmnistgz("eval_labels", ".gz");
-	std::vector<int> predictions = network.predict(eval_images);
-
-	for(int i = 0;i<eval_labels.size();i++)
-	{
-		std::cout << "Prediction: " << predictions[i] << " - Ground truth: " << eval_labels[i] << std::endl;
-	}
-std::cout << std::endl;
-
-	network.saveModel(argv[1]);
 	return 0;
 }

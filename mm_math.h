@@ -397,7 +397,6 @@ namespace MM
 			{
 				ss << j << " ";
 			}
-			ss << "\n";
 		}
 		return ss.str();
 	}

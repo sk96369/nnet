@@ -47,13 +47,20 @@ namespace MM
 		const mat<double>& getOutput(int i) const;
 		//Function that updates the parameters based on the given delta matrices
 		void updateParameters(std::vector<mat<double>> weights_delta, std::vector<mat<double>> biases_delta);
+		//Loads the trained parameters from a file named "filename".txt
+		void loadModel(std::string filename);
+
 		public:
 		//Constructor that receives a vector of integers as its argument.
 		//The number of elements in the vector determines the number of layers in the
 		//network (input and output layers included). The value of each element
 		//determines the number of columns in each matrix.
 		nnet(const std::vector<int> &dimensions, int f_max);
-		void train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int imagewidth, int datasize, int epoch);
+		//Constructor that constructs this object based on the data written in the file
+		//[filename].txt
+		nnet(std::string filename);
+
+		void train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch);
 		//Creates a new normalized input based on the given vector
 		void setInput(const std::vector<int> &newinput);
 		//Function that sets the given vector as input, propagates the data forward and
@@ -61,9 +68,7 @@ namespace MM
 		std::vector<int> predict(const std::vector<int> &data);
 		//Saves the trained parameters to a file named "filename".txt
 		int saveModel(std::string filename);
-		//Loads the trained parameters from a file named "filename".txt
-		void loadModel(std::string filename);
-
+		
 		/* Getters, setters
 		 */
 		std::vector<int> getDimensions();
