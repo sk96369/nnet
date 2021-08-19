@@ -6,14 +6,16 @@
 
 //Constructs a one-hot-vector from 0 to max of size max+1, where max is the highest
 //possible integer being encoded and i is the number being encoded
+/*
 std::vector<int> int_toOneHot(int i, int max)
 {
 	std::vector<int> vec(max+1, 0);
 	vec[i] = 1;
 	return vec;
 }
+*/
 
-
+/*
 int single_onehot_toInt(const std::vector<double> &oh)
 {
 	int size = oh.size();
@@ -25,7 +27,8 @@ int single_onehot_toInt(const std::vector<double> &oh)
 	}
 	return max;
 }
-
+*/
+/*
 int single_onehot_toInt(const std::vector<int> &oh)
 {
 	int size = oh.size();
@@ -37,6 +40,7 @@ int single_onehot_toInt(const std::vector<int> &oh)
 	}
 	return max;
 }
+*/
 
 //List of integers into a one-hot-encoded matrix
 template<typename B>

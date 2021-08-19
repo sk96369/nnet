@@ -123,14 +123,14 @@ vector<int> readmnistgz(string filename, string extension)
 	for(int i = 0;i<numberofitems*sizeofitems;i++)
 	{
 		int rotation = 0;
-		if(i%100 == 0)
+		if(i%5000 == 0)
 		{
-			std::cout << "Reading data from file " << filename << extension << " " << progress[rotation % 4] << "\r";
+			std::cout << "Reading data from file " << filename << " " << progress[rotation % 4] << "\r";
 			rotation++;
 		}
-		std::cout << "Data read from file " << filename << extension << ".\n";
 		inint.push_back(static_cast<int>(buffer[i]));
 	}
+	std::cout << "Data read from file " << filename << ".\n";
 	delete[] buffer;
     	//Cleanup
     	file.close();

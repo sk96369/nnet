@@ -13,7 +13,7 @@
 
 namespace MM
 {
-	nnet::nnet(const std::vector<int> &dimensions, int f_max) : features_maxvalue(f_max), learningrate(0.1), size(dimensions.size() - 1), hidden_layers(dimensions.size() - 1), weights(dimensions.size() - 1), input(dimensions[0]), input_normalized(dimensions[0]), outputs(dimensions.size() - 1), biases(dimensions.size() - 1)
+	nnet::nnet(const std::vector<int> &dimensions, int f_max, double learningrate) : features_maxvalue(f_max), learningrate(learningrate), size(dimensions.size() - 1), hidden_layers(dimensions.size() - 1), weights(dimensions.size() - 1), input(dimensions[0]), input_normalized(dimensions[0]), outputs(dimensions.size() - 1), biases(dimensions.size() - 1)
 	{
 		
 		for(int i = 0;i<size;i++)
@@ -33,6 +33,10 @@ namespace MM
 			mat<double> newbias(-0.2, 0.2, 1, getLayer(i).rows());
 			biases[i] = newbias;
 		}
+	}
+
+	nnet::nnet() : features_maxvalue(0), learningrate(0), size(0), hidden_layers(0), weights(0), input(0), input_normalized(0), outputs(0), biases(0)
+	{
 	}
 
 	void nnet::train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch)
@@ -162,28 +166,40 @@ namespace MM
 	{
 		if(i == -1)
 			return input_normalized;
-		return hidden_layers[i];
+		if(i < size)
+			return hidden_layers[i];
+		else
+			return input_normalized;
 	}
 
 	const mat<double>& nnet::getLayer(int i) const
 	{
 		if(i == -1)
 			return input_normalized;
-		return hidden_layers[i];
+		if(i < size)
+			return hidden_layers[i];
+		else
+			return input_normalized;
 	}
 
 	mat<double>& nnet::getOutput(int i)
 	{
 		if(i == -1)
 			return input_normalized;
-		return outputs[i];
+		if(i < size)
+			return outputs[i];
+		else
+			return input_normalized;
 	}
 
 	const mat<double>& nnet::getOutput(int i) const
 	{
 		if(i == -1)
 			return input_normalized;
-		return outputs[i];
+		if(i < size)
+			return outputs[i];
+		else
+			return input_normalized;
 	}
 
 	int nnet::saveModel(std::string filename)
@@ -193,15 +209,16 @@ namespace MM
 		file.open(filename);
 		if(file.is_open())
 		{
+			file << input.size() << " ";
 			for(int i = 0;i<size;i++)
 			{
-				file << dimensions[i] << " ";
+				file << hidden_layers[i].size() << " ";
 			}
 			file << "/" << learningrate << " " << features_maxvalue << "/" ;
 
 			for(int i = 0;i<size;i++)
 			{
-				file <<  biases[i].toString() << "/" weights[i].toString() << "/";
+				file <<  biases[i].toString() << "/" << weights[i].toString() << "/";
 			}
 		}
 		file.close();
@@ -224,6 +241,7 @@ namespace MM
 		std::stringstream ss;
 		double parameter;
 		int dimension;
+		std::vector<int> dimensions;
 		file.open(filename);
 		if(file.is_open())
 		{
@@ -274,7 +292,7 @@ namespace MM
 		file.close();
 	}
 		
-	void printLayer(int i, std::ostream &o, int precision)
+	void nnet::printLayer(int i, std::ostream &o, int precision)
 	{
 		o << getOutput(i).toString(precision);
 	}

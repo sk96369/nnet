@@ -71,7 +71,7 @@ namespace MM
 
 		//toString implementation
 		//prints each column horizontally, printed with the given precision value
-		//-1 means the precision is not changed
+		//If precision == -1, prints out symbols instead of numbers
 		std::string toString(int precision = -1) const;
 		//prints each row horizontally, with possible floating point
 		//values printed with the given precision value
@@ -390,12 +390,28 @@ namespace MM
 	{
 		std::stringstream ss;
 		if(precision >= 0)
-			ss << std::fixed << std::setprecision(precision);
-		for(auto& i : m)
 		{
-			for(auto& j : i)
+			ss << std::fixed << std::setprecision(precision);
+			for(auto& i : m)
 			{
-				ss << j << " ";
+				for(auto& j : i)
+				{
+					ss << j << " ";
+				}
+			}
+		}
+		else
+		{
+			for(auto& i: m)
+			{
+				for(auto& j : i)
+				{
+					if(j == 0)
+						ss << " ";
+					else
+						ss << "#";
+				}
+				ss << "\n";
 			}
 		}
 		return ss.str();

@@ -38,6 +38,7 @@ namespace MM
 		//Function that updates the parameters based on the given delta matrices
 		void updateParameters(std::vector<mat<double>> weights_delta, std::vector<mat<double>> biases_delta);
 
+		public:
 		//Functions that return a reference to the matrix of the ith layer
 		//Returns the input layer if i == -1
 		mat<double>& getLayer(int i);
@@ -47,7 +48,6 @@ namespace MM
 		mat<double>& getOutput(int i);
 		const mat<double>& getOutput(int i) const;
 
-		public:
 		//Loads the trained parameters from a file named "filename".txt
 		void loadModel(std::string filename);
 		//Prints the values at layer i to output o, with precision numbers after decimal point
@@ -57,10 +57,12 @@ namespace MM
 		//The number of elements in the vector determines the number of layers in the
 		//network (input and output layers included). The value of each element
 		//determines the number of columns in each matrix.
-		nnet(const std::vector<int> &dimensions, int f_max);
+		nnet(const std::vector<int> &dimensions, int f_max, double learningrate);
 		//Constructor that constructs this object based on the data written in the file
 		//[filename].txt
 		nnet(std::string filename);
+		//Default constructor
+		nnet();
 
 		void train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch);
 		//Creates a new normalized input based on the given vector
