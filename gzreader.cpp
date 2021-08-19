@@ -4,6 +4,7 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/filesystem.hpp>
 #include <sstream>
 #include <vector>
 #include "gzreader.h"
@@ -14,10 +15,15 @@ using namespace std;
 //Function for reading the MNIST training data, and returning it in a vector
 vector<int> readmnistgz(string filename, string extension)
 {
+	filename.append(extension);
+	std::vector<int> inint;
+	if(!boost::filesystem::exists(filename))
+	{
+		std::cout << "No file named \n" << filename << "\" can be found!\n";
+		return inint;
+	}
 	const char *progress = "-\\|/";
 	
-	std::vector<int> inint;
-	filename.append(extension);
 	int numberofitems;
 	int sizeofitems = 1;
 

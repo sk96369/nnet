@@ -1,11 +1,2 @@
-1. Getting the model to work
--Get the biases to converge (they are approaching infinite values atm)
-
-
-2. Making the model usable for more tasks
--Add info on the number of layers into saveModel
--Add info on the number of nodes in each layer into saveModel
--Make the number of layers, weights and nodes dynamic, to allow for models of
- different sizes to be created.
 
 

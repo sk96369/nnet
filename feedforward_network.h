@@ -35,22 +35,24 @@ namespace MM
 		void fprop();
 		//Backpropagation
 		void bprop(const std::vector<int> &labels);
+		//Function that updates the parameters based on the given delta matrices
+		void updateParameters(std::vector<mat<double>> weights_delta, std::vector<mat<double>> biases_delta);
 
 		//Functions that return a reference to the matrix of the ith layer
 		//Returns the input layer if i == -1
-
 		mat<double>& getLayer(int i);
 		const mat<double>& getLayer(int i) const;
 		//Functions that return a reference to the matrix of the ith output layer
 		//Returns the input layer if i == -1
 		mat<double>& getOutput(int i);
 		const mat<double>& getOutput(int i) const;
-		//Function that updates the parameters based on the given delta matrices
-		void updateParameters(std::vector<mat<double>> weights_delta, std::vector<mat<double>> biases_delta);
-		//Loads the trained parameters from a file named "filename".txt
-		void loadModel(std::string filename);
 
 		public:
+		//Loads the trained parameters from a file named "filename".txt
+		void loadModel(std::string filename);
+		//Prints the values at layer i to output o, with precision numbers after decimal point
+		void printLayer(int i, std::ostream &o, int precision = 1);
+
 		//Constructor that receives a vector of integers as its argument.
 		//The number of elements in the vector determines the number of layers in the
 		//network (input and output layers included). The value of each element

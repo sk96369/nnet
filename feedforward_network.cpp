@@ -273,6 +273,11 @@ namespace MM
 		}
 		file.close();
 	}
+		
+	void printLayer(int i, std::ostream &o, int precision)
+	{
+		o << getOutput(i).toString(precision);
+	}
 
 
 }
