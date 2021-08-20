@@ -410,7 +410,6 @@ namespace MM
 					else
 						ss << "#";
 				}
-				ss << "\n";
 			}
 		}
 		return ss.str();

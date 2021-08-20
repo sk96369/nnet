@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
 							labels = readmnistgz(user_input[1], ".gz");
 							for(int i = 0;i<labels.size();i++)
 							{
-								std::cout << "Prediction: " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
+								std::cout << "Prediction " << i << ": " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
 							}
 						}
 						else
