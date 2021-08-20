@@ -26,7 +26,6 @@ namespace MM
 	{
 		int x_s;
 		int y_s;
-
 		public:
 		std::vector<std::vector<A>> m;
 

@@ -76,6 +76,7 @@ namespace MM
 		/* Getters, setters
 		 */
 		std::vector<int> getDimensions();
+		int getDimension(int i) {return getOutput(i).size();}
 		mat<double> getOutput();
 	};
 

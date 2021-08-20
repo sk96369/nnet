@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 	int features_maxvalue = -1;
 	int layersize = -1;
 	double learningrate = -1;
+	int imagewidth = -1;
 	bool quit = false;
 	//If the user wants to output to a file, this turns true
 	bool output_to_file = false;
@@ -48,6 +49,13 @@ int main(int argc, char *argv[])
 	{
 		if(user_input_c > 0)
 		{
+			if(user_input[0] == "imagewidth" && user_input_c > 1)
+			{
+				std::stringstream ss;
+				ss << user_input[1];
+				ss >> imagewidth;
+			}
+
 			if((user_input[0] == "print" || user_input[0] == "p"))
 			{
 				if(network_loaded)
@@ -59,13 +67,42 @@ int main(int argc, char *argv[])
 					{
 						if(user_input[1] == "input")
 						{
-							std::string inputmatrix = network.getLayer(-1).toString(-1);
-							if(output_to_file)
-								output << inputmatrix;
+							if(imagewidth > 0)
+							{
+								std::string inputmatrix = network.getLayer(-1).toString(-1);
+								if(output_to_file)
+								{
+									int i = 0;
+									for(auto& symbol : inputmatrix)
+									{
+										output << symbol;
+										i++;
+										if(i == imagewidth)
+										{
+											output << "\n";
+											i = 0;
+										}
+									}
+								}
+								else
+								{
+									int i = 0;
+									for(auto& symbol : inputmatrix)
+									{
+										std::cout << symbol;
+										i++;
+										if(i == imagewidth)
+										{
+											std::cout << "\n";
+											i = 0;
+										}
+									}
+								}
+							}
 							else
-								std::cout << inputmatrix;
+								std::cout << "You need to set image width first.\n";
 						}
-						if(user_input[1] == "output")
+						else if(user_input[1] == "output")
 						{
 							std::vector<int> outputs = onehot_toInt(network.getOutput());
 							if(output_to_file)
@@ -110,14 +147,12 @@ int main(int argc, char *argv[])
 				else
 					std::cout << "The network needs to be initialized before printing. Type \"help\" for help.\n";
 			}
-			else
-				std::cout << "Print format: print [layer] ([precision])\n  (for more info on layers or precision, type \"help print\" \n";
 							
 			if(user_input[0] == "tm" || user_input[0] == "trainmodel")
 			{
 				if(images_loaded && labels_loaded)
 				{
-					if(user_input_c > 5)
+					if(user_input_c > 6)
 					{
 						std::stringstream ss;
 						modelName = user_input[1];
@@ -152,14 +187,16 @@ int main(int argc, char *argv[])
 						}
 			
 						//Read the sizes of the hidden layers
-						std::vector<int> dimensions(user_input_c-6);
-						ss.str("");
+						std::vector<int> dimensions(user_input_c - 6);
+						std::stringstream dimension_ss;
 						for(int i = 6;i<user_input_c;i++)
-							ss << user_input[i] << " ";
+						{
+							dimension_ss << user_input[i] << " ";
+						}
 						for(int i = 6;i<user_input_c;i++)
 						{
 							int dimension = -1;
-							ss >> dimension;
+							dimension_ss >> dimension;
 							if(dimension > 0)
 							{
 								dimensions[i-6] = dimension;
@@ -192,13 +229,14 @@ int main(int argc, char *argv[])
 				else
 					std::cout << "Training the model requires images and labels to be loaded. Type \"help\" to get help.\n";
 			}
-			else
-				std::cout << "trainmodel requires the following arguments:\ntrainmodel [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\n";
 
 			if(user_input[0] == "loadmodel" || user_input[0] == "lm")
 			{
 				if(user_input_c > 1)
+				{
 					network = MM::nnet(std::string(user_input[1]));
+					network_loaded = true;
+				}
 				else
 					std::cout << "loadmodel requires the following arguments:\n   loadmodel [filename]\n";
 			}
@@ -234,9 +272,9 @@ int main(int argc, char *argv[])
 					if(images_loaded)
 					{
 						std::vector<int> predictions = network.predict(images);
-						if(user_input_c > 4)
+						if(user_input_c > 1)
 						{
-							labels = readmnistgz(std::string(user_input[4]), ".gz");
+							labels = readmnistgz(user_input[1], ".gz");
 							for(int i = 0;i<labels.size();i++)
 							{
 								std::cout << "Prediction: " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
@@ -244,9 +282,9 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
-							for(int i = 0;i<images.size()/labels.size();i++)
+							for(int i = 0;i<network.getDimension(-1);i++)
 							{
-								std::cout << "Prediction: " << predictions[i] << std::endl;
+								std::cout << "Prediction " << i << ": " << predictions[i] << std::endl;
 							}
 						}
 						std::cout << std::endl;
@@ -298,15 +336,18 @@ int main(int argc, char *argv[])
 					output.close();
 			}
 		}
-		std::cout << user_input.size() << " " << user_input_c << "\n";
 		if(user_input[0] == "help")
 		{
 			if(user_input_c == 1)
 			{
-				std::cout << "_________________\nloadinput, li [filename]\nloadlabels, ll [filename]\nloadmodel, lm [filename]\npredict\nprint [layer] ([precision])\nquit, q\noutput [filename, \"default\"]\ntrainmodel [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\n________________\n\"help [command] to show more information on a command.\n";
+				std::cout << "_________________\nimagewidth [width of input image]\nloadinput, li [filename]\nloadlabels, ll [filename]\nloadmodel, lm [filename]\npredict ([filename])\nprint [layer] ([precision])\nquit, q\noutput [filename, \"default\"]\ntrainmodel [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\n________________\n\"help [command] to show more information on a command.\n";
 			}
 			else
 			{
+				if(user_input[1] == "imagewidth")
+				{
+					std::cout << "Sets the width of the input images for printing purposes.\nRequired arguments: [width of input image]\nThe argument [width of input image] takes in an integer value over 0.\n";
+				}
 				if(user_input[1] == "loadinput")
 				{
 					std::cout << "Reads input data from a file with the given filename for the model to use. This command is a prerequisite requirement for making predictions and training the model.\nRequired arguments: [filename]\n";
@@ -321,7 +362,7 @@ int main(int argc, char *argv[])
 				}
 				if(user_input[1] == "predict")
 				{
-					std::cout << "Calculates outputs based on the loaded input data.\n   Requires a model to be initialized.\n";
+					std::cout << "Calculates outputs based on the loaded input data.\nThe optional [filename] argument loads ground truth data from a file with the given name to print alongside the model's predictions.\n   Requires a model to be initialized.\n";
 				}
 				if(user_input[1] == "print")
 				{

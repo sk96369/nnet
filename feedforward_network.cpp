@@ -209,6 +209,7 @@ namespace MM
 		file.open(filename);
 		if(file.is_open())
 		{
+			file << size << "/";
 			file << input.size() << " ";
 			for(int i = 0;i<size;i++)
 			{
@@ -218,7 +219,7 @@ namespace MM
 
 			for(int i = 0;i<size;i++)
 			{
-				file <<  biases[i].toString() << "/" << weights[i].toString() << "/";
+				file <<  biases[i].toString(15) << "/" << weights[i].toString(15) << "/";
 			}
 		}
 		file.close();
@@ -238,24 +239,28 @@ namespace MM
 		filename.append(".txt");
 		std::ifstream file;
 		std::string line;
-		std::stringstream ss;
 		double parameter;
 		int dimension;
 		std::vector<int> dimensions;
 		file.open(filename);
 		if(file.is_open())
 		{
+			std::stringstream ss;
 			std::getline(file, line, '/').good();
-			ss << line;
-			while(ss.rdbuf()->in_avail())
+			std::stringstream ss_size;
+			ss_size.str(line);
+			ss_size >> size;
+			std::getline(file, line, '/').good();
+			ss.str(line);
+			for(int i = 0;i<=size;i++)
 			{
 				ss >> dimension;
 				dimensions.push_back(dimension);
 			}
-			size = dimensions.size()-1;
 			std::getline(file, line, '/').good();
-			ss << line;
-			ss >> learningrate >> features_maxvalue;
+			std::stringstream ss_hyperparameters;
+			ss_hyperparameters.str(line);
+			ss_hyperparameters >> learningrate >> features_maxvalue;
 			input = mat<int>(dimensions[0]);
 			input_normalized = mat<double>(dimensions[0]);
 			hidden_layers = std::vector<mat<double>>(size);
@@ -267,26 +272,34 @@ namespace MM
 			}
 			for(int i = 0;i<size;i++)
 			{
-				std::getline(file, line, '/').good();
-				ss << line;
-				std::vector<double> layer_of_parameters;
-				while(ss.rdbuf()->in_avail())
+				if(std::getline(file, line, '/').good())
 				{
-					ss >> parameter;
-					layer_of_parameters.push_back(parameter);
+					std::stringstream parameter_ss;
+					parameter_ss.str(line);
+					std::vector<double> layer_of_parameters;
+					while(parameter_ss.rdbuf()->in_avail())
+					{
+						parameter_ss >> parameter;
+						layer_of_parameters.push_back(parameter);
+					}
+					mat<double> matrix_of_biases(layer_of_parameters, 1, dimensions[i+1]);
+					biases.push_back(matrix_of_biases);
+
 				}
-				mat<double> matrix_of_biases(layer_of_parameters, 1, dimensions[i+1]);
-				biases.push_back(matrix_of_biases);
-				layer_of_parameters.clear();
-				std::getline(file, line, '/').good();
-				ss << line;
-				while(ss.rdbuf()->in_avail())
+			
+				if(std::getline(file, line, '/').good())
 				{
-					ss >> parameter;
-					layer_of_parameters.push_back(parameter);
+					std::stringstream parameter_ss;
+					parameter_ss.str(line);
+					std::vector<double> layer_of_parameters;
+					while(parameter_ss.rdbuf()->in_avail())
+					{
+						parameter_ss >> parameter;
+						layer_of_parameters.push_back(parameter);
+					}
+					mat<double> matrix_of_weights(layer_of_parameters, dimensions[i], dimensions[i+1]);
+					weights.push_back(matrix_of_weights);
 				}
-				mat<double> matrix_of_weights(layer_of_parameters, dimensions[i],
-						dimensions[i+1]);
 			}
 		}
 		file.close();
