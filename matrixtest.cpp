@@ -1,4 +1,3 @@
-#include "gzreader.h"
 #include "feedforward_network.h"
 #include <iostream>
 #include <vector>
@@ -6,6 +5,7 @@
 #include "onehot.h"
 #include <memory>
 #include <fstream>
+#include "dataloader.h"
 
 //Constants
 
@@ -69,7 +69,21 @@ int main(int argc, char *argv[])
 						{
 							if(imagewidth > 0)
 							{
-								std::string inputmatrix = network.getLayer(-1).toString(-1);
+								std::string inputmatrix;
+								int in_row = 0;
+								for(auto& ptr : images)
+								{
+									if(ptr == 0)
+										inputmatrix.append(" ");
+									else
+										inputmatrix.append("#");
+									in_row++;
+									if(in_row == imagewidth)
+									{
+										in_row = 0;
+										inputmatrix.append("\n");
+									}
+								}
 								if(output_to_file)
 								{
 									int i = 0;
@@ -221,7 +235,7 @@ int main(int argc, char *argv[])
 							network = MM::nnet(dimensions_with_input, features_maxvalue, learningrate);
 						if(batchsize > labels.size() || batchsize < 1)
 							batchsize = labels.size();
-						network.train(images, labels, batchsize, inputsize, labels.size(), epoch);
+						network.trainRandom(images, labels, batchsize, inputsize, labels.size(), epoch);
 						network.saveModel(user_input[1]);
 						network_loaded = true;
 					}
@@ -245,7 +259,7 @@ int main(int argc, char *argv[])
 			{
 				if(user_input_c > 1)
 				{
-					images = readmnistgz(std::string(user_input[1]), ".gz");
+					images = loadData(user_input[1]);
 					if(images.size() > 0)
 						images_loaded = true;
 				}
@@ -257,7 +271,7 @@ int main(int argc, char *argv[])
 			{
 				if(user_input_c > 1)
 				{
-					labels = readmnistgz(std::string(user_input[1]), ".gz");
+					labels = loadData(user_input[1]);
 					if(labels.size() > 0)
 						labels_loaded = true;
 				}
@@ -274,7 +288,7 @@ int main(int argc, char *argv[])
 						std::vector<int> predictions = network.predict(images);
 						if(user_input_c > 1)
 						{
-							labels = readmnistgz(user_input[1], ".gz");
+							labels = loadData(user_input[1]);
 							for(int i = 0;i<labels.size();i++)
 							{
 								std::cout << "Prediction " << i << ": " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;

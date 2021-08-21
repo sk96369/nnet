@@ -1,3 +1,5 @@
+#include <time.h>
+#include <cstdlib>
 #include <vector>
 #include <fstream>
 #include <stdlib.h>
@@ -38,6 +40,69 @@ namespace MM
 	nnet::nnet() : features_maxvalue(0), learningrate(0), size(0), hidden_layers(0), weights(0), input(0), input_normalized(0), outputs(0), biases(0)
 	{
 	}
+	
+	void nnet::trainRandom(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch)
+	{
+		
+		std::vector<int> imagebatch;
+		std::vector<int> labelbatch;
+		std::vector<int> all_indexes(datasize);
+		for(int i = 0;i<datasize;i++)
+			all_indexes[i] = i;
+		srand(time(NULL));
+		std::cout << "Starting training with batch size: " << batchsize << ", epochs: " << epoch << "\n";
+		for(int i = 0;i<epoch;i++)
+		{
+			std::vector<int> all_indexes_hat = all_indexes;
+			std::vector<int> indexes_randomized;
+			std::vector<int> imagebag;
+			std::vector<int> labelbag;
+			int upperlimit;
+			int randomindex;
+			for(int j = 0;j<datasize;j++)
+			{
+				upperlimit = datasize - j;
+				randomindex = rand() % upperlimit;
+				indexes_randomized.push_back(all_indexes_hat[randomindex]);
+				all_indexes_hat.erase(all_indexes_hat.begin() + randomindex);
+			}
+			for(auto& j : indexes_randomized)
+			{
+				labelbag.push_back(labels[j]);
+				for(int k = 0;k<imagesize;k++)
+				{
+					imagebag.push_back(j*imagesize + k);
+				}
+			}
+			auto image_start = imagebag.begin();
+			auto image_end = imagebag.begin() + batchsize*imagesize;
+			auto label_start = labelbag.begin();
+			auto label_end = labelbag.begin() + batchsize;
+
+			int iterations = datasize / batchsize;
+			for(int j = 0;j<iterations;j++)
+			{
+				imagebatch.assign(image_start, image_end);
+				labelbatch.assign(label_start, label_end);
+				//Propagate forward
+				setInput(imagebatch);
+				fprop();
+
+				//Backpropagate
+				bprop(labelbatch);
+
+				//Move the iterators
+				image_start += batchsize*imagesize;
+				label_start += batchsize;
+				if(image_start != images.end())
+				{
+					image_end += batchsize*imagesize;
+					label_end += batchsize;
+				}
+				std::cout << "Epoch: " << i << "/" << epoch << " - Iteration: " << j << "/" << iterations << std::endl;
+			}
+		}
+	}
 
 	void nnet::train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch)
 	{
@@ -71,7 +136,7 @@ namespace MM
 				image_end += batchsize*imagesize;
 				label_end += batchsize;
 			}
-			std::cout << "Epoch: " << i << " - Iteration: " << j << std::endl;
+			std::cout << "Epoch: " << i << "/" << epoch << " - Iteration: " << j << "/" << iterations << std::endl;
 		}
 		}
 	}
