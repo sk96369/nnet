@@ -51,7 +51,7 @@ namespace MM
 		//Loads the trained parameters from a file named "filename".txt
 		void loadModel(std::string filename);
 		//Prints the values at layer i to output o, with precision numbers after decimal point
-		void printLayer(int i, std::ostream &o, int precision = 1);
+		void printLayer(int i, std::ostream &o, int precision = 1, int imagewidth = 0);
 
 		//Constructor that receives a vector of integers as its argument.
 		//The number of elements in the vector determines the number of layers in the

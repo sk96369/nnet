@@ -71,7 +71,7 @@ namespace MM
 				labelbag.push_back(labels[j]);
 				for(int k = 0;k<imagesize;k++)
 				{
-					imagebag.push_back(j*imagesize + k);
+					imagebag.push_back(images[j*imagesize + k]);
 				}
 			}
 			auto image_start = imagebag.begin();
@@ -99,7 +99,7 @@ namespace MM
 					image_end += batchsize*imagesize;
 					label_end += batchsize;
 				}
-				std::cout << "Epoch: " << i << "/" << epoch << " - Iteration: " << j << "/" << iterations << std::endl;
+				std::cout << "Epoch: " << i+1 << "/" << epoch << " - Iteration: " << j+1 << "/" << iterations << std::endl;
 			}
 		}
 	}
@@ -370,9 +370,9 @@ namespace MM
 		file.close();
 	}
 		
-	void nnet::printLayer(int i, std::ostream &o, int precision)
+	void nnet::printLayer(int i, std::ostream &o, int precision, int imagewidth)
 	{
-		o << getOutput(i).toString(precision);
+		o << getOutput(i).toString(precision, imagewidth);
 	}
 
 

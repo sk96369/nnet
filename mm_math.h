@@ -71,7 +71,7 @@ namespace MM
 		//toString implementation
 		//prints each column horizontally, printed with the given precision value
 		//If precision == -1, prints out symbols instead of numbers
-		std::string toString(int precision = -1) const;
+		std::string toString(int precision = -1, int imagewidth = 0) const;
 		//prints each row horizontally, with possible floating point
 		//values printed with the given precision value
 		std::string toStringFlipped(int precision = 0) const;
@@ -385,7 +385,7 @@ namespace MM
 	}
 
 	template<typename B>
-	std::string mat<B>::toString(int precision) const
+	std::string mat<B>::toString(int precision, int imagewidth) const
 	{
 		std::stringstream ss;
 		if(precision >= 0)
@@ -403,12 +403,19 @@ namespace MM
 		{
 			for(auto& i: m)
 			{
+				int k = 0;
 				for(auto& j : i)
 				{
 					if(j == 0)
 						ss << " ";
 					else
 						ss << "#";
+					k++;
+					if(k == imagewidth)
+					{
+						ss << "\n";
+						k = 0;
+					}
 				}
 			}
 		}

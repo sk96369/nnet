@@ -69,48 +69,13 @@ int main(int argc, char *argv[])
 						{
 							if(imagewidth > 0)
 							{
-								std::string inputmatrix;
-								int in_row = 0;
-								for(auto& ptr : images)
-								{
-									if(ptr == 0)
-										inputmatrix.append(" ");
-									else
-										inputmatrix.append("#");
-									in_row++;
-									if(in_row == imagewidth)
-									{
-										in_row = 0;
-										inputmatrix.append("\n");
-									}
-								}
 								if(output_to_file)
 								{
-									int i = 0;
-									for(auto& symbol : inputmatrix)
-									{
-										output << symbol;
-										i++;
-										if(i == imagewidth)
-										{
-											output << "\n";
-											i = 0;
-										}
-									}
+									network.printLayer(-1, output, -1, imagewidth);
 								}
 								else
 								{
-									int i = 0;
-									for(auto& symbol : inputmatrix)
-									{
-										std::cout << symbol;
-										i++;
-										if(i == imagewidth)
-										{
-											std::cout << "\n";
-											i = 0;
-										}
-									}
+									network.printLayer(-1, std::cout, -1, imagewidth);
 								}
 							}
 							else
@@ -289,10 +254,14 @@ int main(int argc, char *argv[])
 						if(user_input_c > 1)
 						{
 							labels = loadData(user_input[1]);
+							int correct = 0;
 							for(int i = 0;i<labels.size();i++)
 							{
+								if(predictions[i] == labels[i])
+									correct++;
 								std::cout << "Prediction " << i << ": " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
 							}
+							std::cout << "Accuracy: " << ((double) correct/(double)labels.size()) * 100 << "%\n";
 						}
 						else
 						{
