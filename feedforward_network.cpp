@@ -41,7 +41,7 @@ namespace MM
 	{
 	}
 	
-	void nnet::trainRandom(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch)
+	void nnet::trainRandom(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch, bool printLabels, int imagewidth)
 	{
 		
 		std::vector<int> imagebatch;
@@ -86,6 +86,22 @@ namespace MM
 				labelbatch.assign(label_start, label_end);
 				//Propagate forward
 				setInput(imagebatch);
+
+				//For checking whether the training inputs match their labels
+				if(printLabels && imagewidth > 0)
+				{
+					std::cout << "Input images:\n";
+					printLayer(-1, std::cout, -1, imagewidth);
+					std::cout << "\nLabels: \n";
+					for(auto& label : labelbatch)
+					{
+						std::cout << label << std::endl;
+					}
+					//To pause until user presses a button.
+					std::cout << "Press enter to continue.\n";
+					std::cin.get();
+				}
+
 				fprop();
 
 				//Backpropagate

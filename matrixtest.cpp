@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 	bool quit = false;
 	//If the user wants to output to a file, this turns true
 	bool output_to_file = false;
+	bool showLabels = false;
 	std::ofstream output;
 
 	std::vector<int> images;
@@ -200,7 +201,7 @@ int main(int argc, char *argv[])
 							network = MM::nnet(dimensions_with_input, features_maxvalue, learningrate);
 						if(batchsize > labels.size() || batchsize < 1)
 							batchsize = labels.size();
-						network.trainRandom(images, labels, batchsize, inputsize, labels.size(), epoch);
+						network.trainRandom(images, labels, batchsize, inputsize, labels.size(), epoch, showLabels, imagewidth);
 						network.saveModel(user_input[1]);
 						network_loaded = true;
 					}
@@ -280,10 +281,22 @@ int main(int argc, char *argv[])
 					std::cout << "No predictions can be made because the network has not been initialized yet. To initialize the network, use command \"trainmodel\" or \"loadmodel\".\n";
 				}
 			}
+			if(user_input[0] == "togglelabels")
+			{
+				if(imagewidth > 0)
+				{
+					showLabels += 1 - 2 * showLabels;
+					std::cout << "showLabels = " << showLabels << std::endl;
+				}
+				else
+				{
+					std::cout << "You need to set imagewidth to be able to print the training images and labels\n";
+				}
+			}
 		}
 
 		//Read user input
-		std::cout << "Type a command: (\"help\" to list available commands)\n";
+		std::cout << "Type a command: (\"help\" to list available commands)\n>";
 		std::getline(std::cin, user_input_line);
 		std::stringstream user_input_ss;
 		user_input_ss << user_input_line;
@@ -321,15 +334,16 @@ int main(int argc, char *argv[])
 		}
 		if(user_input[0] == "help")
 		{
+			std::cout << "____________________\n";
 			if(user_input_c == 1)
 			{
-				std::cout << "_________________\nimagewidth [width of input image]\nloadinput, li [filename]\nloadlabels, ll [filename]\nloadmodel, lm [filename]\npredict ([filename])\nprint [layer] ([precision])\nquit, q\noutput [filename, \"default\"]\ntrainmodel [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\n________________\n\"help [command] to show more information on a command.\n";
+				std::cout << "imagewidth [width of input image]\nloadinput, li [filename]\nloadlabels, ll [filename]\nloadmodel, lm [filename]\npredict ([filename])\nprint [layer] ([precision])\nquit, q\noutput [filename, \"default\"]\ntogglelabels\ntrainmodel [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\n________________\n\"help [command] to show more information on a command.\n";
 			}
 			else
 			{
 				if(user_input[1] == "imagewidth")
 				{
-					std::cout << "Sets the width of the input images for printing purposes.\nRequired arguments: [width of input image]\nThe argument [width of input image] takes in an integer value over 0.\n";
+					std::cout << "imagewidth [width of input image]\nSets the width of the input images for printing purposes.\nThe argument [width of input image] takes in an integer value over 0.\n";
 				}
 				if(user_input[1] == "loadinput")
 				{
@@ -337,19 +351,19 @@ int main(int argc, char *argv[])
 				}
 				if(user_input[1] == "loadlabels")
 				{
-					std::cout << "Reads ground truth data from the given file to use in adjusting parameters. This command is a prerequisite requirement for training the model.\nRequired arguments: [filename]\n";
+					std::cout << "loadlabels [filename]\nReads ground truth data from the given file to use in adjusting parameters. This command is a prerequisite requirement for training the model.\n";
 				}
 				if(user_input[1] == "loadmodel")
 				{
-					std::cout << "Reads model dimensions and parameters from the given file. Initializes the model.\nRequired arguments: [filename]\n";
+					std::cout << "loadmodel [filename]\nReads model dimensions and parameters from the given file. Initializes the model.\n";
 				}
 				if(user_input[1] == "predict")
 				{
-					std::cout << "Calculates outputs based on the loaded input data.\nThe optional [filename] argument loads ground truth data from a file with the given name to print alongside the model's predictions.\n   Requires a model to be initialized.\n";
+					std::cout << "predict ([filename])\nCalculates outputs based on the loaded input data.\nThe optional [filename] argument loads ground truth data from a file with the given name to print alongside the model's predictions.\n   Requires a model to be initialized.\n";
 				}
 				if(user_input[1] == "print")
 				{
-						std::cout << "Prints the matrix at the given layer of the model.\nRequired arguments: [layer] ([precision])\nThe [layer] argument takes in a number between -1 and n, with -1 being the index of the input matrix, and n being the index of the final hidden layer, aka. the output layer.\nThe [layer] argument also accepts keywords \"input\" and \"output\", with input printing out the inputs as images, and output printing out the model's predictions as integers.\nThe optional [precision] argument takes in an integer signifying how many numbers after the decimal point are printed.\n   Requires a model to be initialized.\n";
+						std::cout << "print [layer] ([precision])\nPrints the matrix at the given layer of the model.\nThe [layer] argument takes in a number between -1 and n, with -1 being the index of the input matrix, and n being the index of the final hidden layer, aka. the output layer.\nThe [layer] argument also accepts keywords \"input\" and \"output\", with input printing out the inputs as images, and output printing out the model's predictions as integers.\nThe optional [precision] argument takes in an integer signifying how many numbers after the decimal point are printed.\n   Requires a model to be initialized.\n";
 				}
 				if(user_input[1] == "quit")
 				{
@@ -359,13 +373,18 @@ int main(int argc, char *argv[])
 				{
 					std::cout << "Sets the program's output stream to a file with the given filename, or sets it to default, to print output to the console.\n";
 				}
+				if(user_input[1] == "togglelabels")
+				{
+						std::cout << "Toggles the showLabels setting. When training a model when switched on, the training images and labels will be printed.\n   Requires imagewidth to be set.\n";
+				}
 				if(user_input[1] == "trainmodel")
 				{
-					std::cout << "Adjusts the weights of the model based on the loaded input and label data. Runtime might be long.\nRequired arguments: [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\nThe [model name] argument takes in the desired name of the text file in which to save the trained model parameters.\nThe [batch size] argument takes in an integer signifying how many training examples are propagated at a time.\nThe [training epochs] argument takes in an integer signifying how many times the entire training data is passed through the network.\nThe [maximum pixel value] tells the model what the range of values for each pixel is.\nThe [learning rate] affects the amount each parameter is changed during training. This value should be a positive real number greater than 0 and less than 1.\nThe [size of layerz1] ... [size of layer zn] arguments signify how many units are in each hidden layer of the model. The minimum number of hidden layers is 1.\nInitializes the model\n   Requires input and labels to be loaded.\n";
+					std::cout << "trainmodel [model name] [batch size] [training epochs] [maximum pixel value] [learning rate] [size of layer z1] ... [size of layer zn (output layer)]\nAdjusts the weights of the model based on the loaded input and label data. Runtime might be long.\nThe [model name] argument takes in the desired name of the text file in which to save the trained model parameters.\nThe [batch size] argument takes in an integer signifying how many training examples are propagated at a time.\nThe [training epochs] argument takes in an integer signifying how many times the entire training data is passed through the network.\nThe [maximum pixel value] tells the model what the range of values for each pixel is.\nThe [learning rate] affects the amount each parameter is changed during training. This value should be a positive real number greater than 0 and less than 1.\nThe [size of layerz1] ... [size of layer zn] arguments signify how many units are in each hidden layer of the model. The minimum number of hidden layers is 1.\nInitializes the model\n   Requires input and labels to be loaded.\n";
 				}
 				else
 					std::cout << user_input[1] << " is not a recognized command.\n";
 			}
+			std::cout << "____________________\n";
 		}
 	}
 	return 0;

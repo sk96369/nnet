@@ -66,7 +66,7 @@ namespace MM
 
 		void train(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch);
 		//Training function that randomizes the order of the training samples each epoch
-		void trainRandom(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch);
+		void trainRandom(const std::vector<int> &images, const std::vector<int> &labels, int batchsize, int imagesize, int datasize, int epoch, bool printLabels, int imagewidth);
 		//Creates a new normalized input based on the given vector
 		void setInput(const std::vector<int> &newinput);
 		//Function that sets the given vector as input, propagates the data forward and
