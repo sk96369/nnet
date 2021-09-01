@@ -22,7 +22,7 @@ vector<int> readmnistgz(string filename, string extension)
 		std::cout << "No file named \n" << filename << "\" can be found!\n";
 		return inint;
 	}
-	const char *progress = "-\\|/";
+	const char progress[4] = {'-', '\\', '|', '/'};
 	
 	int numberofitems;
 	int sizeofitems = 1;
@@ -126,6 +126,7 @@ vector<int> readmnistgz(string filename, string extension)
 		if(i%5000 == 0)
 		{
 			std::cout << "Reading data from file " << filename << " " << progress[rotation % 4] << "\r";
+			fflush(stdout);
 			rotation++;
 		}
 		inint.push_back(static_cast<int>(buffer[i]));

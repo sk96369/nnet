@@ -121,6 +121,43 @@ namespace MM
 	}
 
 	template <typename A, typename B>
+	mat<double> cuda_mm(const mat<A> &left, const mat<B> &right)
+	{
+		if(left.columns() != right.rows())
+		{
+			std::cout << "matrix dimension error\nLeft(column row): " << left.columns() << " " << left.rows() << "\nRight(column row): " << right.columns() << " " << right.rows() << std::endl;
+			return mat<double>(0, 0, 0.0);
+		}
+		
+		mat<double> newmatrix((double)0.0, right.columns(), left.rows());
+//		std::cout << "left matrix: " << left.m.size() << " " << left.m[0].size() << std::endl;
+//		std::cout << "right matrix: " << right.m.size() << " " << right.m[0].size() << std::endl;
+//		std::cout << "newmatrix: " << newmatrix.m.size() << " " << newmatrix.m[0].size() << std::endl;
+		for(int i = 0;i<newmatrix.m.size();i++)
+		{
+			for(int j = 0;j<newmatrix.m[0].size();j++)
+			{
+				for(int k = 0;k < left.m.size();k++)
+				{
+					newmatrix.m[i][j] += (double)left.m[k][j] * (double)right.m[i][k];
+			//		std::cout << newmatrix.m[i][j] << " ";     //TESTOUTPUT
+				}
+				
+			}
+		}
+/*		for(int i = 0;i<newmatrix.columns();i++)
+		{
+			for(int j = 0;j<newmatrix.rows();j++)
+			{
+				std::cout << newmatrix.m[j][i] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cin.get(); 						TESTOUTPUT*/ 
+		return newmatrix;
+	}
+
+	template <typename A, typename B>
 	mat<double> hadamard(const mat<A> &left, const mat<B> &right)
 	{
 		if(left.rows() == right.rows() && left.columns() == right.columns())

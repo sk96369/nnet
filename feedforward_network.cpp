@@ -88,7 +88,7 @@ namespace MM
 				setInput(imagebatch);
 
 				//For checking whether the training inputs match their labels
-				if(printLabels && imagewidth > 0)
+				if(j == 0 && printLabels && imagewidth > 0)
 				{
 					std::cout << "Input images:\n";
 					printLayer(-1, std::cout, -1, imagewidth);
@@ -115,7 +115,8 @@ namespace MM
 					image_end += batchsize*imagesize;
 					label_end += batchsize;
 				}
-				std::cout << "Epoch: " << i+1 << "/" << epoch << " - Iteration: " << j+1 << "/" << iterations << std::endl;
+				std::cout << "Epoch: " << i+1 << "/" << epoch << " - Iteration: " << j+1 << "/" << iterations << "\r";
+				fflush(stdout);
 			}
 		}
 	}
@@ -182,18 +183,6 @@ namespace MM
 		mat<int> target_output(int_toOneHot(labels, getOutput().rows()));
 		mat<double> delta = getError(outputs[size-1], target_output);
 		double scalar = (double)1/(double)input_normalized.columns();
-
-//		std::cout << "Weights at i = 0: " << weights[0].toString() << std::endl;
-//		std::cout << "Weights at i = 1: " << weights[1].toString() << std::endl << std::endl;
-//		std::cout << "Target output " << target_output.toString() << std::endl;
-//		std::cout << "Prediction: " << getOutput().toString() << std::endl;
-//		std::cout << "Delta[1]: " << delta.toString() << std::endl;
-
-//		std::cout << "Biases delta[1]: " << biases_delta[i].toString() << std::endl << std::endl;
-//		std::cout << "Weights delta[1]: " << weights_delta[i].toString() << std::endl << std::endl;
-//		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
-//		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());
-
 		for(int i = size-1;i>=0;i--)
 		{
 			if(i < size-1)
@@ -204,16 +193,7 @@ namespace MM
 			weights_delta[i] = mm(scalar_m(delta, scalar),
 						getTranspose(getOutput(i-1)));
 			biases_delta[i] = sum_m(scalar_m(delta, scalar));
-//			std::cout << std::endl << biases_delta[i].toString() << std::endl;
-
-
-//		printf("Hidden layer[%i]: %i %i - Outputs[%i]: %i %i\n", i, getLayer(i).columns(), getLayer(i).rows(), i, getOutput(i).columns(), getOutput(i).rows());
-//		printf("Delta[%i]: %i %i - Weights[%i]: %i %i - Weightdelta[%i]: %i %i\n", i, delta.columns(), delta.rows(), i, weights[i].columns(), weights[i].rows(), i, weights_delta[i].columns(), weights_delta[i].rows());
-
 		}
-//		std::cout << "Delta[0]: " << delta.toString() << std::endl << std::endl;
-//		std::cout << "Weights delta[0]: " << weights_delta[0].toString() << std::endl << std::endl;
-//		std::cin.get();
 		updateParameters(weights_delta, biases_delta);
 	}
 
@@ -240,6 +220,7 @@ namespace MM
 	void nnet::setInput(const std::vector<int> &newinput)
 	{
 		mat<int> newinput_mat(newinput, newinput.size()/input.rows(), input.rows());
+		input.newValues(newinput_mat);
 		input_normalized.newValues(getNormalized(newinput_mat, features_maxvalue));
 	}
 
