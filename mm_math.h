@@ -9,6 +9,7 @@
 #include <cfloat>
 #include <iomanip>
 #include <sstream>
+#include <chrono> //For measuring time taken on functions
 
 namespace MM
 {
@@ -58,6 +59,8 @@ namespace MM
 		mat(double a, double b, int x, int y);
 		//Copy constructor
 		mat(const mat &o);
+		//Constructs a matrix based on the given c-style array
+		mat(const A* cArray, int size, int column_size, int row_size);
 
 		//Functions for setting new values for the matrix based on the given arguments
 		//---input_values---
@@ -124,6 +127,8 @@ namespace MM
 	template <typename A, typename B>
 	mat<double> hadamard(const mat<A> &left, const mat<B> &right)
 	{
+		std::cout << "Hadamard - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
 		if(left.rows() == right.rows() && left.columns() == right.columns())
 		{
 			mat<double> product(0.0, left.columns(), left.rows());
@@ -134,8 +139,12 @@ namespace MM
 					product.m[i][j] = (double)left.m[i][j] * (double)right.m[i][j];
 				}
 			}
+			auto stop = std::chrono::high_resolution_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+			std::cout << duration.count() << " microseconds\n";
 			return product;
 		}
+		auto stop = std::chrono::high_resolution_clock::now();
 		std::cout << "Incorrect vector sizes, returning an empty vector...\n";
 		return mat<double>(0, 0, 0);
 	}
@@ -230,6 +239,9 @@ namespace MM
 	template<typename A>
 	mat<A> softmax(const mat<A> &o)
 	{
+		std::cout << "softmax - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
 		mat<A> softmaxed(o);
 		for(int i = 0;i<softmaxed.columns();i++)
 		{
@@ -243,6 +255,9 @@ namespace MM
 				softmaxed[i][j] = std::exp(softmaxed[i][j]) / sum;
 			}
 		}
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		std::cout << duration.count() << " microseconds\n";
 		return softmaxed;
 	}
 
@@ -250,6 +265,9 @@ namespace MM
 	template<typename A>
 	mat<A> getSoftmax(const mat<A> &o)
 	{
+		std::cout << "getSoftmax - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
 		mat<A> softmaxed(o);
 		for(int i = 0;i<softmaxed.columns();i++)
 		{
@@ -273,6 +291,10 @@ namespace MM
 				}
 			}
 		}
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		std::cout << duration.count() << " microseconds\n";
+
 		return softmaxed;
 	}
 	
@@ -281,6 +303,9 @@ namespace MM
 	template <typename A>
 	mat<double> sum_m(const mat<A> &original)
 	{
+		std::cout << "sum_m - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
 		mat<double> collapsed(0.0, 1, original.rows());
 		for(int i = 0;i<original.rows();i++)
 		{
@@ -291,6 +316,10 @@ namespace MM
 			}
 			collapsed.m[0][i] = sum;
 		}
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		std::cout << duration.count() << " microseconds\n";
+
 		return collapsed;
 	}
 
@@ -324,6 +353,9 @@ namespace MM
 	template<typename A, typename B>
 	mat<double> getError(const mat<A> &left, const mat<B> &right)
 	{
+		std::cout << "getError - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
 		if(left.columns() != right.columns() && left.rows() != right.rows())
 		{
 			std::cout << "Dimension error in getError()\n";
@@ -336,6 +368,10 @@ namespace MM
 				error.m[i][j] = (double)left.m[i][j] - right.m[i][j];
 			}
 		}
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		std::cout << duration.count() << " microseconds\n";
+
 		return error;
 	}
 
@@ -444,6 +480,9 @@ namespace MM
 	template<typename A, typename B>
 	mat<double> add(const mat<A> &left, const mat<B> right)
 	{
+		std::cout << "add - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
 		mat<double> sum_matrix(left);
 		if(right.rows() == left.rows() && right.columns() == 1);
 		{
@@ -454,7 +493,12 @@ namespace MM
 					sum_matrix[i][j] += right[0][j];
 				}
 			}
+			auto stop = std::chrono::high_resolution_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+			std::cout << duration.count() << " microseconds\n";
+
 			return sum_matrix;
+			
 		}
 		//If nothing has been returned yet, return the copied left matrix and print
 		//an error message
@@ -551,7 +595,7 @@ namespace MM
 	}
 
 	template<typename B>
-	mat<B>::mat(const B* cArray, int size, int column_size) : x_s(size/columnSize), y_s(columnSize), m(x_s)
+	mat<B>::mat(const B* cArray, int size, int columnSize, int rowSize) : x_s(rowSize), y_s(columnSize), m(x_s)
 	{
 		for(int i = 0;i<x_s;i++)
 		{
@@ -559,21 +603,22 @@ namespace MM
 			m[i] = newcolumn;
 			for(int j = 0;j<y_s;j++)
 			{
-				m[i][j] = cArray[column_size * i + j];
+				m[i][j] = cArray[columnSize * i + j];
 			}
 		}
 	}
 
-	A* getCArray() const
+	template <typename B>
+	B* mat<B>::getCArray() const
 	{
-		A* cArray = malloc(x_s * y_s * sizeof(A));
+		B* cArray = (B*)malloc(x_s * y_s * sizeof(B));
 		for(int i = 0;i<x_s;i++)
 		{
 			for(int j = 0;j<y_s;j++)
 			{
-				//Set the value at index_of_column0 * size of column + index_of_row
+				//Set the value at index_of_column * size of column + index_of_row
 				//to the value at column i and row j of this matrix
-				cArray[i*y_s + j] = this->[i][j];
+				cArray[i*y_s + j] = m[i][j];
 			}
 		}
 		return cArray;

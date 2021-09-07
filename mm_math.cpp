@@ -1,5 +1,6 @@
 #include "mm_math.h"
 #include <vector>
+#include <chrono> //For measuring time taken on functions
 
 namespace MM
 {
@@ -52,6 +53,9 @@ namespace MM
 
 	mat<double> scalar_m(const mat<double> &original, double scalar)
 	{
+		std::cout << "scalar_m - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
 //		std::cout << "Scalar product original: " << original.toString() << std::endl << "Scalar value: " << scalar << std::endl;
 		mat<double> product(original);
 		for(auto& i : product.m)
@@ -61,8 +65,10 @@ namespace MM
 				j *= scalar;
 			}
 		}
-//		std::cout << "Scalar product test: " << product.toString() << std::endl;
-//		std::cin.get();
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		std::cout << duration.count() << " microseconds\n";
+
 		return product;
 	}
 }

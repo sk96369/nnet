@@ -2,7 +2,7 @@
 #include "mm_math.h"
 #define N 32
 
-extern "C" void gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right);
+MM::mat<double> gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right);
 
 __global__ void gpu_mm_kernel(int l_size, int l_y, double* d_left, int r_size, int r_y, double* d_right, double* d_output)
 {
@@ -16,7 +16,7 @@ __global__ void gpu_mm_kernel(int l_size, int l_y, double* d_left, int r_size, i
 		int outputIdx = rIdx/r_y + lIdx % l_y;
 
 		//Multiply the elements and increase the matching element in the output array
-		output[outputIdx] += d_left[lIdx] * d_right[rIdx];
+		d_output[outputIdx] += d_left[lIdx] * d_right[rIdx];
 	}
 }
 
@@ -48,6 +48,9 @@ MM::mat<double> gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right
 		cudaMemcpy(d_left, leftCArray, left.columns() * left.rows() * sizeof(double), cudaMemcpyHostToDevice);
 		cudaMemcpy(d_right, rightCArray, right.columns() * right.rows() * sizeof(double), cudaMemcpyHostToDevice);
 
+		//Free the memory from the c-style arrays
+		delete[] leftCArray;
+		delete[] rightCArray;
 		//Set the kernel launch parameters
 		dim3 GRID(ceil(right.columns()/32*16), ceil(left.rows()/32*16));
 		dim3 BLOCK(32*16, 32*16);
@@ -55,15 +58,18 @@ MM::mat<double> gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right
 		//Launch the kernel
 		gpu_mm_kernel<<<GRID, BLOCK>>>(leftArraySize, left.rows(), d_left, rightArraySize, right.rows(), d_right, d_output);
 		//Move the output array from the device to the host
-		double* outputCArray = malloc(right.columns() * left.rows() * sizeof(double*));
+		double* outputCArray = (double*)malloc(right.columns() * left.rows() * sizeof(double*));
 		cudaMemcpy(outputCArray, d_output, right.columns() * left.rows() * sizeof(double), cudaMemcpyDeviceToHost);
 		// Construct a matrix object based on the output c-style array
-		MM::mat<double> outputmatrix(outputCArray, outputArraySize, right.columns());
+		MM::mat<double> outputmatrix(outputCArray, outputArraySize, left.rows(), right.columns());
 		//Free the memory allocated on the gpu
 		cudaFree(d_left);
 		cudaFree(d_right);
 		cudaFree(d_output);
+		delete[] outputCArray;
 		return outputmatrix;
 	}
+	//The declaration promises to return something, so we return the left matrix
+	return left;
 }
 

@@ -12,8 +12,9 @@
 #include "mm_math.h"
 #include "feedforward_network.h"
 #include <iterator>
+#include <chrono> //For measuring time taken on functions
 
-extern "C" void gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right);
+MM::mat<double> gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right);
 
 namespace MM
 {
@@ -165,11 +166,27 @@ namespace MM
 		int i = 0;
 		for(;i<size-1;i++)
 		{
-			getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
+			std::cout << "gpu_mm - time taken: ";
+			auto start = std::chrono::high_resolution_clock::now();
+
+			mat<double> matrixproduct = gpu_mm(weights[i], getLayer(i-1));
+			auto stop = std::chrono::high_resolution_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+			std::cout << duration.count() << " microseconds\n";
+
+			getLayer(i).newValues(add(matrixproduct, biases[i]));
 			getOutput(i).newValues(getRelu(getLayer(i)));
 
 		}
-		getLayer(i).newValues(add(mm(weights[i], getLayer(i-1)), biases[i]));
+		std::cout << "gpu_mm - time taken: ";
+		auto start = std::chrono::high_resolution_clock::now();
+
+		mat<double> matrixproduct = gpu_mm(weights[i], getLayer(i-1));
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		std::cout << duration.count() << " microseconds\n";
+
+		getLayer(i).newValues(add(matrixproduct, biases[i]));
 		getOutput(i).newValues(getSoftmax(getLayer(i)));
 	}
 
@@ -189,19 +206,34 @@ namespace MM
 		{
 			if(i < size-1)
 			{
-				delta.newValues(hadamard(mm(getTranspose(weights[i+1]), delta),
-							drelu(getLayer(i))));
+				std::cout << "gpu_mm - time taken: ";
+				auto start = std::chrono::high_resolution_clock::now();
+
+				mat<double> matrixproduct = gpu_mm(getTranspose(weights[i+1]), delta);
+				auto stop = std::chrono::high_resolution_clock::now();
+				auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+				std::cout << duration.count() << " microseconds\n";
+
+				delta.newValues(hadamard(matrixproduct, drelu(getLayer(i))));
 			}
-			weights_delta[i] = mm(scalar_m(delta, scalar),
-						getTranspose(getOutput(i-1)));
+			mat<double> scalarproduct = scalar_m(delta, scalar);
+			std::cout << "gpu_mm - time taken: ";
+			auto start = std::chrono::high_resolution_clock::now();
+
+			weights_delta[i] = gpu_mm(scalarproduct, getTranspose(getOutput(i-1)));
+			auto stop = std::chrono::high_resolution_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+			std::cout << duration.count() << " microseconds\n";
+
 			biases_delta[i] = sum_m(scalar_m(delta, scalar));
 		}
 		for(int i = 0;i<weights_delta.size();i++)
 		{
+			//TESTOUTPUTS: for monitoring the deltas
 			mat<double> weights_delta_sum = sum_m(getTranspose(sum_m(weights_delta[i])));
-			std::cout << "Total sum of weights delta  " << i << ": " << weights_delta_sum[0][0] << "\n";
+			//std::cout << "Total sum of weights delta  " << i << ": " << weights_delta_sum[0][0] << "\n";
 			mat<double> biases_delta_sum = sum_m(getTranspose(sum_m(biases_delta[i])));
-			std::cout << "Total sum of biases delta  " << i << ": " << biases_delta_sum[0][0] << "\n";
+			//std::cout << "Total sum of biases delta  " << i << ": " << biases_delta_sum[0][0] << "\n";
 
 		}
 			
