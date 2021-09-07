@@ -37,7 +37,8 @@ namespace MM
 		//A function that returns a vector of all values, if the matrix can be represented
 		//as a single vector, otherwise returns an empty vector
 		std::vector<A> getVector() const;
-
+		//A function that returns the equivalent c-style (1-D) array of the matrix
+		A* getCArray() const;
 		//Transposes the matrix
 		void transpose();
 
@@ -81,47 +82,10 @@ namespace MM
 		
 		std::vector<A>& operator[](int i) {return m[i];}
 		const std::vector<A>& operator[](int i) const {return m[i];}
-		};
+	};
 
 	template <typename A, typename B>
 	mat<double> mm(const mat<A> &left, const mat<B> &right)
-	{
-		if(left.columns() != right.rows())
-		{
-			std::cout << "matrix dimension error\nLeft(column row): " << left.columns() << " " << left.rows() << "\nRight(column row): " << right.columns() << " " << right.rows() << std::endl;
-			return mat<double>(0, 0, 0.0);
-		}
-		
-		mat<double> newmatrix((double)0.0, right.columns(), left.rows());
-//		std::cout << "left matrix: " << left.m.size() << " " << left.m[0].size() << std::endl;
-//		std::cout << "right matrix: " << right.m.size() << " " << right.m[0].size() << std::endl;
-//		std::cout << "newmatrix: " << newmatrix.m.size() << " " << newmatrix.m[0].size() << std::endl;
-		for(int i = 0;i<newmatrix.m.size();i++)
-		{
-			for(int j = 0;j<newmatrix.m[0].size();j++)
-			{
-				for(int k = 0;k < left.m.size();k++)
-				{
-					newmatrix.m[i][j] += (double)left.m[k][j] * (double)right.m[i][k];
-			//		std::cout << newmatrix.m[i][j] << " ";     //TESTOUTPUT
-				}
-				
-			}
-		}
-/*		for(int i = 0;i<newmatrix.columns();i++)
-		{
-			for(int j = 0;j<newmatrix.rows();j++)
-			{
-				std::cout << newmatrix.m[j][i] << " ";
-			}
-			std::cout << std::endl;
-		}
-		std::cin.get(); 						TESTOUTPUT*/ 
-		return newmatrix;
-	}
-
-	template <typename A, typename B>
-	mat<double> cuda_mm(const mat<A> &left, const mat<B> &right)
 	{
 		if(left.columns() != right.rows())
 		{
@@ -585,6 +549,37 @@ namespace MM
 			}
 		}
 	}
+
+	template<typename B>
+	mat<B>::mat(const B* cArray, int size, int column_size) : x_s(size/columnSize), y_s(columnSize), m(x_s)
+	{
+		for(int i = 0;i<x_s;i++)
+		{
+			std::vector<B> newcolumn(y_s);
+			m[i] = newcolumn;
+			for(int j = 0;j<y_s;j++)
+			{
+				m[i][j] = cArray[column_size * i + j];
+			}
+		}
+	}
+
+	A* getCArray() const
+	{
+		A* cArray = malloc(x_s * y_s * sizeof(A));
+		for(int i = 0;i<x_s;i++)
+		{
+			for(int j = 0;j<y_s;j++)
+			{
+				//Set the value at index_of_column0 * size of column + index_of_row
+				//to the value at column i and row j of this matrix
+				cArray[i*y_s + j] = this->[i][j];
+			}
+		}
+		return cArray;
+	}
+
+
 
 	mat<double> getNormalized(const mat<int> &original, int feature_max);
 	mat<double> scalar_m(const mat<double> &original, double scalar);

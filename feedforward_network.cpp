@@ -13,6 +13,8 @@
 #include "feedforward_network.h"
 #include <iterator>
 
+extern "C" void gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right);
+
 namespace MM
 {
 	nnet::nnet(const std::vector<int> &dimensions, int f_max, double learningrate) : features_maxvalue(f_max), learningrate(learningrate), size(dimensions.size() - 1), hidden_layers(dimensions.size() - 1), weights(dimensions.size() - 1), input(dimensions[0]), input_normalized(dimensions[0]), outputs(dimensions.size() - 1), biases(dimensions.size() - 1)
@@ -194,6 +196,16 @@ namespace MM
 						getTranspose(getOutput(i-1)));
 			biases_delta[i] = sum_m(scalar_m(delta, scalar));
 		}
+		for(int i = 0;i<weights_delta.size();i++)
+		{
+			mat<double> weights_delta_sum = sum_m(getTranspose(sum_m(weights_delta[i])));
+			std::cout << "Total sum of weights delta  " << i << ": " << weights_delta_sum[0][0] << "\n";
+			mat<double> biases_delta_sum = sum_m(getTranspose(sum_m(biases_delta[i])));
+			std::cout << "Total sum of biases delta  " << i << ": " << biases_delta_sum[0][0] << "\n";
+
+		}
+			
+			
 		updateParameters(weights_delta, biases_delta);
 	}
 
@@ -226,7 +238,7 @@ namespace MM
 
 	mat<double>& nnet::getLayer(int i)
 	{
-		if(i == -1)
+		if(i < 0)
 			return input_normalized;
 		if(i < size)
 			return hidden_layers[i];
@@ -236,7 +248,7 @@ namespace MM
 
 	const mat<double>& nnet::getLayer(int i) const
 	{
-		if(i == -1)
+		if(i < 0)
 			return input_normalized;
 		if(i < size)
 			return hidden_layers[i];
@@ -246,7 +258,7 @@ namespace MM
 
 	mat<double>& nnet::getOutput(int i)
 	{
-		if(i == -1)
+		if(i < 0)
 			return input_normalized;
 		if(i < size)
 			return outputs[i];
@@ -256,7 +268,7 @@ namespace MM
 
 	const mat<double>& nnet::getOutput(int i) const
 	{
-		if(i == -1)
+		if(i < 0)
 			return input_normalized;
 		if(i < size)
 			return outputs[i];
