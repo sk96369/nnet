@@ -13,6 +13,7 @@ asdasd.txt
 labelsout.txt
 testnumber.txt
 *.txt
+<<<<<<< HEAD
 *.out
 *.o
 *.obj
@@ -405,3 +406,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
+=======
+*.o
+*.out
+*.obj
+>>>>>>> 1d2a5c9dfd6e3fdce12042208f16891f723ea798
