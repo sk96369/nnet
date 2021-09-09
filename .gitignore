@@ -13,3 +13,6 @@ asdasd.txt
 labelsout.txt
 testnumber.txt
 *.txt
+*.o
+*.out
+*.obj
