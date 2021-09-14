@@ -60,7 +60,7 @@ namespace MM
 		//Copy constructor
 		mat(const mat &o);
 		//Constructs a matrix based on the given c-style array
-		mat(const A* cArray, int size, int column_size, int row_size);
+		mat(const A* cArray, int size, int y, int x);
 
 		//Functions for setting new values for the matrix based on the given arguments
 		//---input_values---
@@ -271,16 +271,18 @@ namespace MM
 		mat<A> softmaxed(o);
 		for(int i = 0;i<softmaxed.columns();i++)
 		{
+			//Calculate the sum of all the values in column i
 			double sum = 0;
 			for(int j = 0;j < softmaxed.rows();j++)
 			{
 				sum += std::exp(softmaxed[i][j]);
 			}
     		
-    			for(int j = 0;j<softmaxed.rows();j++)
-    			{
-    			    softmaxed[i][j] = std::exp(softmaxed[i][j])/sum;
-    			}
+			//Calculate the softmax for the column based on the sum
+    		for(int j = 0;j<softmaxed.rows();j++)
+    		{
+    		    softmaxed[i][j] = std::exp(softmaxed[i][j])/sum;
+    		}
 			//Check for a nan-value, and change it to 1 if one is found
 			for(int j = 0;j<softmaxed.rows();j++)
 			{
@@ -360,12 +362,15 @@ namespace MM
 		{
 			std::cout << "Dimension error in getError()\n";
 		}
-		mat<double> error((double) 0.0, left.columns(), left.rows());
+		mat<double> error((double)0.0, left.columns(), left.rows());
 		for(int i = 0;i<error.columns();i++)
 		{
 			for(int j = 0;j<error.rows();j++)
 			{
-				error.m[i][j] = (double)left.m[i][j] - right.m[i][j];
+//				std::cout << "Left matrix[" << i << "][" << j << "] = " << left.m[i][j] << " - " << "Right matrix[" << i << "][" << j << "] = " << right.m[i][j] << " = " << left.m[i][j] - right.m[i][j] << std::endl;
+				error.m[i][j] = left.m[i][j] - right.m[i][j];
+//				std::cout << "Error[" << i << "][" << j << "] = " << error[i][j] << std::endl;
+//				std::cin.get();
 			}
 		}
 		auto stop = std::chrono::high_resolution_clock::now();
@@ -567,17 +572,16 @@ namespace MM
 	{
 		x_s = original.columns();
 		y_s = original.rows();
-		std::vector<std::vector<B>> new_m(x_s);
+		m.clear();
+		m = original.m;
 		for(int i = 0;i < x_s;i++)
 		{
-			std::vector<B> new_column(y_s);
-			new_m[i] = new_column;
+			m[i] = original.m[i];
 			for(int j = 0;j < y_s;j++)
 			{
-				new_m[i][j] = original.m[i][j];
+				m[i][j] = original.m[i][j];
 			}
 		}
-		m = new_m;
 	}
 
 	template<typename B>
@@ -595,16 +599,16 @@ namespace MM
 	}
 
 	template<typename B>
-	mat<B>::mat(const B* cArray, int size, int columnSize, int rowSize) : x_s(rowSize), y_s(columnSize), m(x_s)
+	mat<B>::mat(const B* cArray, int size, int y, int x) : x_s(x), y_s(y), m(x)
 	{
-		for(int i = 0;i<x_s;i++)
+		for (int i = 0; i < x_s; i++)
 		{
-			std::vector<B> newcolumn(y_s);
+			std::vector<B> newcolumn(y);
 			m[i] = newcolumn;
-			for(int j = 0;j<y_s;j++)
-			{
-				m[i][j] = cArray[columnSize * i + j];
-			}
+		}
+		for (int i = 0; i < size; i++)
+		{
+			m[i % x][i / x] = cArray[i];
 		}
 	}
 
@@ -612,14 +616,9 @@ namespace MM
 	B* mat<B>::getCArray() const
 	{
 		B* cArray = (B*)malloc(x_s * y_s * sizeof(B));
-		for(int i = 0;i<x_s;i++)
+		for (int i = 0; i < x_s * y_s; i++)
 		{
-			for(int j = 0;j<y_s;j++)
-			{
-				//Set the value at index_of_column * size of column + index_of_row
-				//to the value at column i and row j of this matrix
-				cArray[i*y_s + j] = m[i][j];
-			}
+			cArray[i] = m[i % x_s][i / x_s];
 		}
 		return cArray;
 	}

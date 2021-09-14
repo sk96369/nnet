@@ -174,8 +174,8 @@ namespace MM
 			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 			std::cout << duration.count() << " microseconds\n";
 
-			getLayer(i).newValues(add(matrixproduct, biases[i]));
-			getOutput(i).newValues(getRelu(getLayer(i)));
+			hidden_layers[i] = add(matrixproduct, biases[i]);
+			outputs[i] = getRelu(getLayer(i));
 
 		}
 		std::cout << "gpu_mm - time taken: ";
@@ -186,8 +186,8 @@ namespace MM
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 		std::cout << duration.count() << " microseconds\n";
 
-		getLayer(i).newValues(add(matrixproduct, biases[i]));
-		getOutput(i).newValues(getSoftmax(getLayer(i)));
+		hidden_layers[i] = add(matrixproduct, biases[i]);
+		outputs[i] = getSoftmax(hidden_layers[i]);
 	}
 
 	mat<double> nnet::getOutput()
@@ -201,6 +201,10 @@ namespace MM
 		std::vector<mat<double>> biases_delta(size);
 		mat<int> target_output(int_toOneHot(labels, getOutput().rows()));
 		mat<double> delta = getError(outputs[size-1], target_output);
+//		std::cout << "Target output:\n" << target_output.toString(5) << std::endl;
+//		std::cout << "Model output:\n" << outputs[size - 1].toString(5) << std::endl;
+//		std::cout << "Error between target output and model output:\n" << delta.toString(5) << std::endl;
+//		std::cin.get();
 		double scalar = (double)1/(double)input_normalized.columns();
 		for(int i = size-1;i>=0;i--)
 		{
@@ -217,6 +221,7 @@ namespace MM
 				delta.newValues(hadamard(matrixproduct, drelu(getLayer(i))));
 			}
 			mat<double> scalarproduct = scalar_m(delta, scalar);
+//			std::cout << "Scalar product in bprop: \n" << scalarproduct.toString(9) << std::endl;
 			std::cout << "gpu_mm - time taken: ";
 			auto start = std::chrono::high_resolution_clock::now();
 
@@ -225,18 +230,18 @@ namespace MM
 			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 			std::cout << duration.count() << " microseconds\n";
 
-			biases_delta[i] = sum_m(scalar_m(delta, scalar));
+			biases_delta[i] = sum_m(scalarproduct);
 		}
 		for(int i = 0;i<weights_delta.size();i++)
 		{
 			//TESTOUTPUTS: for monitoring the deltas
 			mat<double> weights_delta_sum = sum_m(getTranspose(sum_m(weights_delta[i])));
-			//std::cout << "Total sum of weights delta  " << i << ": " << weights_delta_sum[0][0] << "\n";
+			std::cout << "Total sum of weights delta  " << i << ": " << weights_delta_sum[0][0] << "\n";
 			mat<double> biases_delta_sum = sum_m(getTranspose(sum_m(biases_delta[i])));
-			//std::cout << "Total sum of biases delta  " << i << ": " << biases_delta_sum[0][0] << "\n";
+			std::cout << "Total sum of biases delta  " << i << ": " << biases_delta_sum[0][0] << "\n";
 
 		}
-			
+//		std::cin.get();	
 			
 		updateParameters(weights_delta, biases_delta);
 	}
@@ -245,8 +250,16 @@ namespace MM
 	{
 		for(int i = 0;i<size;i++)
 		{
-			weights[i].newValues(getError(weights[i], scalar_m(weights_delta[i], learningrate)));
-			biases[i].newValues(getError(biases[i], scalar_m(biases_delta[i], learningrate)));
+//			std::cout << "Weights of layer " << i << ": " << weights[i].toString(1) << std::endl;
+			mat<double> scalarproduct = scalar_m(weights_delta[i], learningrate);
+//			std::cout << "Scalar product of the weights " << i << " in updateParameters: " << scalarproduct.toString(2) << std::endl;
+//			std::cout << "Error of layer " << i << ": " <<getError(weights[i], scalar_m(weights_delta[i], learningrate)).toString(1) << std::endl;
+//			std::cout << "Error of layer " << i << " multiplied by scalar: " << scalar_m(weights_delta[i], learningrate).toString(1) << std::endl;
+			weights[i] = getError(weights[i], scalarproduct);
+//			std::cout << "Updated weights of layer " << i << ": " << weights[i].toString(1) << std::endl;
+//			std::cout << weights[i].toString(2);
+			biases[i] = getError(biases[i], scalar_m(biases_delta[i], learningrate));
+//			std::cin.get();
 		}
 	}
 

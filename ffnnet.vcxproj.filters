@@ -49,6 +49,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="matrixmultiply.cu" />
+    <CudaCompile Include="matrixmultiply.cu" />
   </ItemGroup>
 </Project>

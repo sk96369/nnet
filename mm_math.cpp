@@ -56,8 +56,11 @@ namespace MM
 		std::cout << "scalar_m - time taken: ";
 		auto start = std::chrono::high_resolution_clock::now();
 
-//		std::cout << "Scalar product original: " << original.toString() << std::endl << "Scalar value: " << scalar << std::endl;
+		//std::cout << "Scalar product original:\n" << original.toString(2) << std::endl;
+//		std::cout << "Scalar: " << scalar << std::endl;
+//		std::cout << "Scalar original matrix: \n" << original.toString(1) << std::endl;
 		mat<double> product(original);
+//		std::cout << "Copy of the original matrix: \n" << product.toString(1) << std::endl;
 		for(auto& i : product.m)
 		{
 			for(auto& j : i)
@@ -65,10 +68,12 @@ namespace MM
 				j *= scalar;
 			}
 		}
+//		std::cout << "Scalar product: \n" << product.toString(1) << std::endl;
+//		std::cout << "Scalar product inside the scalar_m function:\n" << product.toString(2) << std::endl;
 		auto stop = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 		std::cout << duration.count() << " microseconds\n";
-
+		
 		return product;
 	}
 }
