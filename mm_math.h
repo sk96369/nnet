@@ -35,6 +35,10 @@ namespace MM
 		int rows() const {return y_s;}
 		int columns() const {return x_s;}
 		bool isEmpty() const {return x_s == 0;}
+		//Calculates random values for the elements of the matrix, as described by Kaiming He (2015)
+		//He weight initialization: weight = G(0, sqrt(2/n)), where G is a random number with a Gaussian probability distribution
+		//with a mean of 0 and a standard deviation of square root 2/n, where n is the number of input nodes
+		void heInitialize(double mean, double stDev);
 		//A function that returns a vector of all values, if the matrix can be represented
 		//as a single vector, otherwise returns an empty vector
 		std::vector<A> getVector() const;
@@ -152,7 +156,15 @@ namespace MM
 	template<typename B>
 	mat<B>::mat(double a, double b, int x, int y) : x_s(x), y_s(y), m(x)
 	{
-		std::random_device rd;
+		for (int i = 0; i < x; i++)
+		{
+			m[i] = std::vector<double>(y);
+		}
+		//Calculate the standard deviation for He initialization, and call the function
+		double stDev = sqrt((double)2 / (double)x_s);
+		heInitialize(0.0, stDev);
+
+/*		std::random_device rd;       <---DEPRECATED WEIGHT INITIALIZATION
 		std::mt19937 gen(rd());
 		std::uniform_real_distribution<double> distr(a, b);
 		for(int i = 0;i<x;i++)
@@ -162,7 +174,7 @@ namespace MM
 			{
 				m[i][j] = distr(rd);
 			}
-		}
+		}*/
 	}
 
 	template <typename B>

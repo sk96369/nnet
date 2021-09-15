@@ -210,6 +210,18 @@ int main(int argc, char *argv[])
 					std::cout << "Training the model requires images and labels to be loaded. Type \"help\" to get help.\n";
 			}
 
+			if (user_input[0] == "resetparameters" || user_input[0] == "rp")
+			{
+				std::cout << "Are you sure? y/n\n";
+				std::string confirmation;
+				std::cin >> confirmation;
+				if (confirmation == "y")
+				{
+					network.resetParameters();
+					std::cout << "Parameters have been reset.\n";
+				}
+			}
+
 			if(user_input[0] == "loadmodel" || user_input[0] == "lm")
 			{
 				if(user_input_c > 1)

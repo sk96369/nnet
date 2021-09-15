@@ -47,6 +47,8 @@ namespace MM
 		//Returns the input layer if i == -1
 		mat<double>& getOutput(int i);
 		const mat<double>& getOutput(int i) const;
+		//Function that resets all parameters to random values, as in the constructor
+		void resetParameters();
 
 		//Loads the trained parameters from a file named "filename".txt
 		void loadModel(std::string filename);

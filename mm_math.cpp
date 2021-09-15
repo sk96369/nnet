@@ -35,6 +35,20 @@ namespace MM
 		return in;
 	}
 	*/
+
+	void mat<double>::heInitialize(double mean, double stDev)
+	{
+		std::default_random_engine generator;
+		std::normal_distribution<double> distribution(mean, stDev);
+		for (auto& i : m)
+		{
+			for (auto& j : i)
+			{
+				j = distribution(generator);
+			}
+		}
+	}
+
 	mat<double> getNormalized(const mat<int> &original, int feature_max)
 	{
 		std::vector<std::vector<double>> new_m(original.columns());

@@ -30,12 +30,14 @@ namespace MM
 		}
 		for(int i = 0;i<size;i++)
 		{
+			
+
 			mat<double> newweight(-0.5, 0.5, getLayer(i-1).rows(), getLayer(i).rows());
 			weights[i] = newweight;
 		}
 		for(int i = 0;i<size;i++)
 		{
-			mat<double> newbias(-0.2, 0.2, 1, getLayer(i).rows());
+			mat<double> newbias(0.1, 0.3, 1, getLayer(i).rows());
 			biases[i] = newbias;
 		}
 	}
@@ -429,5 +431,23 @@ namespace MM
 		o << getOutput(i).toString(precision, imagewidth);
 	}
 
-
+	void nnet::resetParameters()
+	{
+		//Set the weights to new values using the He-method
+		for (auto& w : weights)
+		{
+			w.heInitialize((double)w.columns(), 0.0);
+		}
+		//Set the biases to 0.1
+		for (auto& b : biases)
+		{
+			for (auto& i : b.m)
+			{
+				for (auto& j : i)
+				{
+					j = 0.1;
+				}
+			}
+		}
+	}
 }
