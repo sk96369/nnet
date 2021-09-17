@@ -12,6 +12,17 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 }
 
 MM::mat<double> gpu_mm(const MM::mat<double>& left, const MM::mat<double>& right);
+MM::mat<double> gpu_leakyRelu(double multiplier, const MM::mat<double>& matrix);
+
+__global__ void gpu_leakyRelu_kernel(double multiplier, double* d_cArray, int size)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	if (idx < size)
+	{
+		if(cArray[idx] < 0)
+			cArray[idx] *= multiplier;
+	}
+}
 
 __global__ void gpu_mm_kernel(int M, int N, int w, const double* d_left, const double* d_right, double* d_output)
 {
@@ -30,6 +41,30 @@ __global__ void gpu_mm_kernel(int M, int N, int w, const double* d_left, const d
 		d_output[lIdx * N + rIdx] = value;
 	}
 
+}
+
+MM::mat<double> gpu_leakyRelu(double multiplier, const MM::mat<double>& matrix)
+{
+	//Prepare the arguments for the kernel call
+	int size = matrix.columns() * matrix.rows();
+	double* cArray = matrix.getCArray();
+	double* d_cArray;
+	gpuErrchk(cudaMalloc(&d_cArray, size * sizeof(double)));
+	gpuErrchk(cudaMemcpy(d_cArray, cArray, size * sizeof(double), cudaMemcpyHostToDevice));
+
+	//Call the kernel
+	dim3 GRID((int)ceil(size/ (32 * 32)));
+	dim3 BLOCK(32 * 32);
+	gpu_leakyRelu_kernel << <GRID, BLOCK >> > (multiplier, matrix, size);
+	gpuErrchk(cudaPeekAtLastError());
+
+	//Wait for the kernel to complete its work, then copy the data to host
+	gpuErrchk(cudaDeviceSynchronize());
+	gpuErrchk(cudaMemcpy(cArray, d_cArray, size * sizeof(double), cudaMemcpyDeviceToHost));
+
+	//Create a new matrix from the data and return it
+	MM::mat<double> activatedMatrix(cArray, size, matrix.rows(), matrix.columns());
+	return activatedMatrix;
 }
 
 MM::mat<double> gpu_mm(const MM::mat<double>& left, const MM::mat<double>& right)

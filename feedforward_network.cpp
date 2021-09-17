@@ -14,6 +14,8 @@
 #include <iterator>
 #include <chrono> //For measuring time taken on functions
 
+//Definitions
+
 MM::mat<double> gpu_mm(const MM::mat<double> &left, const MM::mat<double> &right);
 
 namespace MM

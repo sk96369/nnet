@@ -73,8 +73,11 @@ namespace MM
 		void newValues(const mat<A> &original);
 
 		/* member functions */
-		//Applies the relu function
+		//Applies the ReLU function to the matrix
 		void relu();
+		//Applies the leaky ReLU function to the matrix 
+		//Takes the multiplier for negative values as its argument. The default multiplier is 0.01
+		void leakyRelu(double multiplier = 0.01);
 
 		//toString implementation
 		//prints each column horizontally, printed with the given precision value
@@ -635,7 +638,17 @@ namespace MM
 		return cArray;
 	}
 
-
+	void leakyRelu(double multiplier)
+	{
+		for (auto& i : m)
+		{
+			for (auto& j : i)
+			{
+				if (j < 0)
+					j = multiplier * j;
+			}
+		}
+	}
 
 	mat<double> getNormalized(const mat<int> &original, int feature_max);
 	mat<double> scalar_m(const mat<double> &original, double scalar);

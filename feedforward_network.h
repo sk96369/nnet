@@ -2,12 +2,13 @@
 
 #include "mm_math.h"
 #include <vector>
+#include "settings.h"
 
 namespace MM
 {
 	class nnet
 	{
-
+		Settings settings;
 		double learningrate;
 		//Input shape: number of features(f) = number of rows, batch size(m) = number of
 		//columns.
