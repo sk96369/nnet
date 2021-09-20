@@ -8,12 +8,13 @@
 #include <sstream>
 #include <vector>
 #include "gzreader.h"
+#include "settings.h"
 
 using namespace std;
 
 
 //Function for reading the MNIST training data, and returning it in a vector
-vector<int> readmnistgz(string filename, string extension)
+vector<int> readmnistgz(string filename, string extension, std::vector<int> &metadata)
 {
 	filename.append(extension);
 	std::vector<int> inint;
@@ -39,7 +40,7 @@ vector<int> readmnistgz(string filename, string extension)
     	int nextint;
 	char nextchar;
 
-	//Get the first 64 bits of data from the stream
+	//Read the metadata
 	std::string intsizechar(4, 0);
 
 	cout << "Magic number: " ;
@@ -70,6 +71,7 @@ vector<int> readmnistgz(string filename, string extension)
 				| (int)(((unsigned char)intsizechar[3]));
 		
 		numberofitems = nextint;
+		metadata[MM::ITEMS] = numberofitems;
 
 		std::cout << nextint << std::endl;
 	}
@@ -89,7 +91,7 @@ vector<int> readmnistgz(string filename, string extension)
 				| (int)(((unsigned char)intsizechar[3]));
 		
 		numberofitems = nextint;
-
+		metadata[MM::ITEMS] = numberofitems;
 		std::cout << nextint << std::endl;
 
 		cout << "Number of rows: " ;
@@ -102,7 +104,7 @@ vector<int> readmnistgz(string filename, string extension)
 				| (int)(((unsigned char)intsizechar[1]) << 16)
 				| (int)(((unsigned char)intsizechar[2]) << 8)
 				| (int)(((unsigned char)intsizechar[3]));
-		
+		metadata[MM::ROWS] = nextint;
 		std::cout << nextint << std::endl;
 
 		cout << "Number of columns: " ;
@@ -115,7 +117,7 @@ vector<int> readmnistgz(string filename, string extension)
 				| (int)(((unsigned char)intsizechar[1]) << 16)
 				| (int)(((unsigned char)intsizechar[2]) << 8)
 				| (int)(((unsigned char)intsizechar[3]));
-		
+		metadata[MM::COLUMNS] = nextint;
 		std::cout << nextint << std::endl;
 	}
 	unsigned char* buffer = new unsigned char[numberofitems*sizeofitems];

@@ -4,6 +4,38 @@
 #include "dataloader.h"
 #include <sstream>
 #include "gzreader.h"
+#include <filesystem>
+#include <fstream>
+
+std::vector<std::string> listInputFormats(int version)
+{
+	std::vector<std::string> inputFormats;
+	if(version > 0)
+	{
+		inputFormats.push_back(".gz");
+		inputFormats.push_back(".txt");
+	}
+}
+
+std::vector<std::string> listFiles(std::string path, const std::vector<std::string> &extensions)
+{
+	std::vector<std::string> filenames;
+	std::filesystem::create_directories(path);
+	//Iterate through all the files in the directory path
+	for(auto& ptr : std::filesystem::directory_iterator(path))
+	{
+		std::vector<std::string> help = &ptr.split('.');
+		//Check that the file has a matching extension 
+		for(auto& extension : extensions)
+		{
+			if(help.size() == 2 && help[1] == extension)
+			{
+				filenames.push_back(&ptr);
+			}
+		}
+	}
+	return filenames;
+}
 
 std::vector<std::string> parseFilename(std::string filename_full)
 {
@@ -24,15 +56,14 @@ std::vector<std::string> parseFilename(std::string filename_full)
 	return parsed;
 }
 
-std::vector<int> loadData(std::string str)
+std::vector<int> loadData(std::string str, std::vector<int> &metadata, std::vector<int> &output)
 {
 	std::vector<std::string> parsed = parseFilename(str);
-	std::vector<int> data;
 	if(parsed[1] != "")
 	{
 		if(parsed[1] == ".gz")
 		{
-			data = readmnistgz(parsed[0], parsed[1]);
+			output = readmnistgz(parsed[0], parsed[1], metadata);
 		}
 		else if(parsed[1] == ".txt")
 		{
@@ -49,5 +80,5 @@ std::vector<int> loadData(std::string str)
 	{
 		std::cout << "Invalid filename, please include the file extension (f.e. \"file.gz\")\n";
 	}
-	return data;
+	return output;
 }

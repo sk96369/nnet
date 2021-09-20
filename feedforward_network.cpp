@@ -327,7 +327,7 @@ namespace MM
 
 	int nnet::saveModel(std::string filename)
 	{
-		filename.append(".txt");
+		filename.append(".model");
 		std::ofstream file;
 		file.open(filename);
 		if(file.is_open())
@@ -359,7 +359,7 @@ namespace MM
 		
 	nnet::nnet(std::string filename)
 	{
-		filename.append(".txt");
+		filename.append(".model");
 		std::ifstream file;
 		std::string line;
 		double parameter;

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdexcept>
+#include <string>
 
 namespace MM
 {
@@ -75,92 +77,78 @@ namespace MM
 		}
 	}
 
-	 readCommand(istream &is)
+	bool readInt(std::istream &is, int &output)
 	{
+		std::string inputString;
+		getline(is, inputString);
+		try
+		{
+			output = std::stoi(inputString);
+		}
+		catch(std::invalid_argument)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	std::queue<int> readCommand(istream &is)
+	{
+		std::queue<int> commands;
 		//Read user input
 		std::cout << "Type a command: (\"help\" to list available commands)\n>";
 		std::getline(std::cin, user_input_line);
 		std::stringstream user_input_ss;
-		user_input_ss << user_input_line;
-		user_input.clear();
-		user_input_c = 0;
-		while(user_input_ss >> user_input_word)
-		{
-			user_input_c ++;
-			user_input.push_back(user_input_word);
-		}
+		std::string word << user_input_line;
+		
 		if(user_input[0] == "quit" || user_input[0] == "q")
 		{
-			quit = true;
+			commands.push_back(QUIT);
 		}
-		if(user_input[0] == "output")
+		if(user_input[0] == "settings")
 		{
-			if(user_input_c > 1)
-			{
-				if(user_input[1] == "default")
-					output_to_file = false;
-				else
-				{
-					output_to_file = true;
-					if(output.is_open())
-						output.close();
-					output.open(user_input[1]);
-				}
-			}
-			else
-			{
-				output_to_file = false;
-				if(output.is_open())
-					output.close();
-			}
+			commands.push_back(SETTINGS);
 		}
 		if(user_input[0] == "help")
 		{
-			std::cout << "____________________\n";
-			
-			std::cout << "____________________\n";
+			commands.push_back(HELP);
 		}
 
-		if(user_input[0] == "imagewidth" && user_input_c > 1)
+		if((user_input[0] == "print" || user_input[0] == "p"))
 		{
-				std::stringstream ss;
-				ss << user_input[1];
-				ss >> imagewidth;
-			}
-
-			if((user_input[0] == "print" || user_input[0] == "p"))
+			commands.push_back(PRINT);
+		}
+			if(network_loaded)
 			{
-				if(network_loaded)
+				std::stringstream ss;
+				int layer = 0;
+				int precision = 0;
+				if(user_input_c > 1)
 				{
-					std::stringstream ss;
-					int layer = 0;
-					int precision = 0;
-					if(user_input_c > 1)
+					if(user_input[1] == "input")
 					{
-						if(user_input[1] == "input")
+						if(imagewidth > 0)
 						{
-							if(imagewidth > 0)
-							{
-								if(output_to_file)
-								{
-									network.printLayer(-1, output, -1, imagewidth);
-								}
-								else
-								{
-									network.printLayer(-1, std::cout, -1, imagewidth);
-								}
-							}
-							else
-								std::cout << "You need to set image width first.\n";
-						}
-						else if(user_input[1] == "output")
-						{
-							std::vector<int> outputs = onehot_toInt(network.getOutput());
 							if(output_to_file)
 							{
-								for(int i = 0;i<outputs.size();i++)
-								{
-									output << "Output for data point " << i << ": " << outputs[i] << "\n";
+								network.printLayer(-1, output, -1, imagewidth);
+							}
+							else
+							{
+								network.printLayer(-1, std::cout, -1, imagewidth);
+							}
+						}
+						else
+							std::cout << "You need to set image width first.\n";
+					}
+					else if(user_input[1] == "output")
+					{
+						std::vector<int> outputs = onehot_toInt(network.getOutput());
+						if(output_to_file)
+						{
+							for(int i = 0;i<outputs.size();i++)
+							{
+								output << "Output for data point " << i << ": " << outputs[i] << "\n";
 								}
 							}
 							else
@@ -201,88 +189,11 @@ namespace MM
 							
 			if(user_input[0] == "tm" || user_input[0] == "trainmodel")
 			{
-				if(images_loaded && labels_loaded)
-				{
-					if(user_input_c > 6)
-					{
-						std::stringstream ss;
-						modelName = user_input[1];
-						ss << user_input[2] << " " << user_input[3]<< " " << user_input[4] << " " << user_input[5];
-						if(ss >> batchsize)
-							std::cout << "Batch size: " << batchsize << "\n";
-						else
-						{
-							std::cout << "No integer found for batch size, exiting...\n";
-							exit(1);
-						}
-						if(ss >> epoch)
-							std::cout << "Training epochs: " << epoch << "\n";
-						else
-						{
-							std::cout << "No integer found for training epoch count, exiting...\n";
-							exit(1);
-						}
-						if(ss >> features_maxvalue)
-							std::cout << "Max value of pixel in training data: " << features_maxvalue << "\n";
-						else
-						{
-							std::cout << "No integer found for batch size, exiting...\n";
-							exit(1);
-						}
-						if(ss >> learningrate)
-							std::cout << "Learning rate: " << learningrate << "\n";
-						else
-						{
-							std::cout << "No floating point value found for learning rate, exiting...\n";
-							exit(1);
-						}
-			
-						//Read the sizes of the hidden layers
-						std::vector<int> dimensions(user_input_c - 6);
-						std::stringstream dimension_ss;
-						for(int i = 6;i<user_input_c;i++)
-						{
-							dimension_ss << user_input[i] << " ";
-						}
-						for(int i = 6;i<user_input_c;i++)
-						{
-							int dimension = -1;
-							dimension_ss >> dimension;
-							if(dimension > 0)
-							{
-								dimensions[i-6] = dimension;
-							}
-							else
-							{
-								std::cout << "Could not read size of hidden layer " << i-6 << ". Exiting...\n";
-								exit(1);
-							}
-						}
-			
-						int inputsize = images.size()/labels.size();
-						std::vector<int> dimensions_with_input;
-						dimensions_with_input.push_back(inputsize);
-						for(auto& i : dimensions)
-						{
-							dimensions_with_input.push_back(i);
-						}
-
-						//If a network has not yet been constructed, call the constructor with the given dimensions
-						if(!network_loaded)
-							network = MM::nnet(dimensions_with_input, features_maxvalue, learningrate);
-						if(batchsize > labels.size() || batchsize < 1)
-							batchsize = labels.size();
-						network.trainRandom(images, labels, batchsize, inputsize, labels.size(), epoch, showLabels, imagewidth);
-						network.saveModel(user_input[1]);
-						network_loaded = true;
-					}
-				}
-				else
-					std::cout << "Training the model requires images and labels to be loaded. Type \"help\" to get help.\n";
-			}
-
+				commands.push_back(TRAIN_MODEL);
+				
 			if (user_input[0] == "resetparameters" || user_input[0] == "rp")
 			{
+				commands.push_back(RESET_PARAMETERS);
 				std::cout << "Are you sure? y/n\n";
 				std::string confirmation;
 				std::cin >> confirmation;
@@ -295,6 +206,7 @@ namespace MM
 
 			if(user_input[0] == "loadmodel" || user_input[0] == "lm")
 			{
+				commands.push_back(LOAD_MODEL);
 				if(user_input_c > 1)
 				{
 					network = MM::nnet(std::string(user_input[1]));
@@ -306,6 +218,7 @@ namespace MM
 				
 			if(user_input[0] == "loadinput" || user_input[0] == "li")
 			{
+				commands.push_back(LOAD_INPUT);
 				if(user_input_c > 1)
 				{
 					images = loadData(user_input[1]);
@@ -318,6 +231,7 @@ namespace MM
 
 			if(user_input[0] == "loadlabels" || user_input[0] == "ll")
 			{
+				commands.push_back(LOAD_LABELS);
 				if(user_input_c > 1)
 				{
 					labels = loadData(user_input[1]);
@@ -330,6 +244,7 @@ namespace MM
 	
 			if(user_input[0] == "predict")
 			{
+				commands.push_back(PREDICT);
 				if(network_loaded)
 				{
 					if(images_loaded)
@@ -376,9 +291,10 @@ namespace MM
 					std::cout << "You need to set imagewidth to be able to print the training images and labels\n";
 				}
 			}
+		//Add the rest of the command to the queue
+		while(user_input_ss >> user_input_word)
+		{
+			commands.push_back(user_input_word);
+		}
 	}
-
-	int readCommand(int argc, char* argv[])
-	{
-
 }
