@@ -66,35 +66,118 @@ int main(int argc, char *argv[])
 			case HELP:
 				printHelp(userInput
 				break;
+			case EVALUATE:
+				if(network_loaded)
+				{
+					if(images_loaded)
+					{
+						std::vector<int> predictions = network.predict(images);
+						std::cout << "Select the file to evaluate the model outputs with:\n";
+						std::string filename;
+						std::vector<std::string> filelist = MM::listFiles("labels", MM::listInputFormats(VERSION));
+
+						if()
+						{
+							std::cout << 
+							if(!loadData(user_input[1], labels_metadata, labels))
+							{
+								std::cout << "Could not load label data!\n";
+							}
+							if(labels_metadata[ITEMS] == images_metadata[ITEMS])
+							{
+								int correct = 0;
+								for(int i = 0;i<labels.size();i++)
+								{
+									if(predictions[i] == labels[i])
+										correct++;
+									std::cout << "Prediction " << i << ": " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
+								}
+								std::cout << "Accuracy: " << ((double) correct/(double)labels.size()) * 100 << "%\n";
+							}
+							else
+							{
+								std::cout << "The number of input data points and labels do not match.\n";
+							}
+						}
+						else
+						{
+							for(int i = 0;i<network.getDimension(-1);i++)
+							{
+								std::cout << "Prediction " << i << ": " << predictions[i] << std::endl;
+							}
+						}
+						std::cout << std::endl;
+					}
+					else
+						std::cout << "No predictions can be made because no inputs have been loaded yet. To load inputs, use command \"loadinput\".\n";
+				}
+				else
+				{
+					std::cout << "No predictions can be made because the network has not been initialized yet. To initialize the network, use command \"trainmodel\" or \"loadmodel\".\n";
+				}
+				break;
+
 			case PREDICT:
+				if(network_loaded)
+				{
+					if(images_loaded)
+					{
+						std::vector<int> predictions = network.predict(images);
+						if(parseCommand)
+						{
+							if(!loadData(user_input[1], labels_metadata, labels))
+							{
+								std::cout << "Could not load label data!\n";
+							}
+							if(labels_metadata[ITEMS] == images_metadata[ITEMS])
+							{
+								int correct = 0;
+								for(int i = 0;i<labels.size();i++)
+								{
+									if(predictions[i] == labels[i])
+										correct++;
+									std::cout << "Prediction " << i << ": " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
+								}
+								std::cout << "Accuracy: " << ((double) correct/(double)labels.size()) * 100 << "%\n";
+							}
+							else
+							{
+								std::cout << "The number of input data points and labels do not match.\n";
+							}
+						}
+						else
+						{
+							for(int i = 0;i<network.getDimension(-1);i++)
+							{
+								std::cout << "Prediction " << i << ": " << predictions[i] << std::endl;
+							}
+						}
+						std::cout << std::endl;
+					}
+					else
+						std::cout << "No predictions can be made because no inputs have been loaded yet. To load inputs, use command \"loadinput\".\n";
+				}
+				else
+				{
+					std::cout << "No predictions can be made because the network has not been initialized yet. To initialize the network, use command \"trainmodel\" or \"loadmodel\".\n";
+				}
 				break;
 			case LOAD_INPUT:
 				std::cout << "Choose a file to load the input from:\n";
-				std::vector<std::string> formats = listInputFormats(VERSION);
-				std::vector<std::string> filenames = listFiles(formats);
-				if(filenames.size() > 0)
+				std::string inputFileName;
+				if(selectFile("input", inputFileName))
 				{
-					int selection = -1;
-					while(selection < 0)
-					{
-						for(int i = 0;i < filenames.size();i++)
+					
+						if(!loadData(filenames[selection], images_metadata, images))
 						{
-							std::cout << i << ": " << filename << std::endl;
+							std::cout << "Input data could not be loaded!\n";
+							//                                         --------------Print additional information
 						}
-						if(!readInt(std::cin, selection))
+						else
 						{
-							std::cout << "Invalid input!\n";
+							imagewidth = images_metadata[COLUMNS];
+							images_loaded = true;
 						}
-					}
-					if(!loadData(filenames[selection], images_metadata, images))
-					{
-						std::cout << "Input data is invalid!\n";
-						//                                         --------------Print additional information
-					}
-					else
-					{
-						imagewidth = images_metadata[COLUMNS];
-						images_loaded = true;
 					}
 				}
 				else
@@ -235,6 +318,12 @@ int main(int argc, char *argv[])
 				break;
 			case HELP:
 				printHelp(userInput[1]);
+				break;
+			case RESET_PARAMETERS:
+				if(MM::confirm)
+				{
+					network.resetParameters();
+				}
 				break;
 			default:
 				break;

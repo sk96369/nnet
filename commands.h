@@ -19,6 +19,17 @@ namespace MM
 		PREDICT,
 	}
 
+	bool parseCommands(std::queue<int> &commandQueue, int &output)
+	{
+		if(!commandQueue.empty())
+		{
+			output = commandqueue.front();
+			commandqueue.pop();
+			return true;
+		}
+		return false;
+	}
+
 	void printHelp(int command)
 	{
 		switch(command)
@@ -77,18 +88,32 @@ namespace MM
 		}
 	}
 
-	bool readInt(std::istream &is, int &output)
+	bool readInt(std::istream &is, int &output, int min = 0, int max = 0)
 	{
 		std::string inputString;
 		getline(is, inputString);
 		try
 		{
 			output = std::stoi(inputString);
+			if(min < max && (output < min || output > max))
+				throw std::out_of_range;
 		}
 		catch(std::invalid_argument)
 		{
+			std::cout << "ERROR: Not an integer!\n";
 			return false;
 		}
+		catch(std::out_of_range)
+		{
+			printf("ERROR: Integer out of range (%i - %i)\n", min, max);
+			return false;
+		}
+		return true;
+	}
+
+	bool readString(std::istream &is, std::string &output)
+	{
+		getline(is, inputString);
 		return true;
 	}
 
@@ -194,14 +219,6 @@ namespace MM
 			if (user_input[0] == "resetparameters" || user_input[0] == "rp")
 			{
 				commands.push_back(RESET_PARAMETERS);
-				std::cout << "Are you sure? y/n\n";
-				std::string confirmation;
-				std::cin >> confirmation;
-				if (confirmation == "y")
-				{
-					network.resetParameters();
-					std::cout << "Parameters have been reset.\n";
-				}
 			}
 
 			if(user_input[0] == "loadmodel" || user_input[0] == "lm")
@@ -219,65 +236,17 @@ namespace MM
 			if(user_input[0] == "loadinput" || user_input[0] == "li")
 			{
 				commands.push_back(LOAD_INPUT);
-				if(user_input_c > 1)
-				{
-					images = loadData(user_input[1]);
-					if(images.size() > 0)
-						images_loaded = true;
-				}
-				else
-					std::cout << "loadinput requires the following arguments:\n   loadinput [filename]\n";
 			}
 
 			if(user_input[0] == "loadlabels" || user_input[0] == "ll")
 			{
 				commands.push_back(LOAD_LABELS);
-				if(user_input_c > 1)
-				{
-					labels = loadData(user_input[1]);
-					if(labels.size() > 0)
-						labels_loaded = true;
-				}
-				else
-					std::cout << "loadlabels requires the following arguments:\n   loadlabels [filename]\n";
 			}
 	
 			if(user_input[0] == "predict")
 			{
 				commands.push_back(PREDICT);
-				if(network_loaded)
-				{
-					if(images_loaded)
-					{
-						std::vector<int> predictions = network.predict(images);
-						if(user_input_c > 1)
-						{
-							labels = loadData(user_input[1]);
-							int correct = 0;
-							for(int i = 0;i<labels.size();i++)
-							{
-								if(predictions[i] == labels[i])
-									correct++;
-								std::cout << "Prediction " << i << ": " << predictions[i] << " - Ground truth: " << labels[i] << std::endl;
-							}
-							std::cout << "Accuracy: " << ((double) correct/(double)labels.size()) * 100 << "%\n";
-						}
-						else
-						{
-							for(int i = 0;i<network.getDimension(-1);i++)
-							{
-								std::cout << "Prediction " << i << ": " << predictions[i] << std::endl;
-							}
-						}
-						std::cout << std::endl;
-					}
-					else
-						std::cout << "No predictions can be made because no inputs have been loaded yet. To load inputs, use command \"loadinput\".\n";
-				}
-				else
-				{
-					std::cout << "No predictions can be made because the network has not been initialized yet. To initialize the network, use command \"trainmodel\" or \"loadmodel\".\n";
-				}
+				
 			}
 			if(user_input[0] == "togglelabels")
 			{

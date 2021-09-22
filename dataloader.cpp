@@ -56,9 +56,31 @@ std::vector<std::string> parseFilename(std::string filename_full)
 	return parsed;
 }
 
-std::vector<int> loadData(std::string str, std::vector<int> &metadata, std::vector<int> &output)
+bool getFile(const std::string &path, std::string &selectedFile)
 {
-	std::vector<std::string> parsed = parseFilename(str);
+	std::vector<std::string> filenames = listFiles(path, listInputFormats(VERSION));
+	if(filenames.size() > 0)
+	{
+		int selection = makeSelection(filenames, 3);
+		if(!readInt(std::cin, selection))
+		{
+			std::cout << "Invalid input!\n";
+			return false;
+		}
+		else
+		{
+			selectedFile = filenames[selection];
+			return true;
+		}
+	}
+	//If the program executes to this point, no files have been found and false is returned
+	std::cout << "No files found in directory " << path << "/\n";
+	return false;
+}
+
+std::vector<int> loadData(std::string filename, std::vector<int> &metadata, std::vector<int> &output)
+{
+	std::vector<std::string> parsed = parseFilename(filename);
 	if(parsed[1] != "")
 	{
 		if(parsed[1] == ".gz")

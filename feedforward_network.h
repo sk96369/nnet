@@ -77,7 +77,8 @@ namespace MM
 		std::vector<int> predict(const std::vector<int> &data);
 		//Saves the trained parameters to a file named "filename".txt
 		int saveModel(std::string filename);
-		
+		void resetParameters();
+
 		/* Getters, setters
 		 */
 		std::vector<int> getDimensions();
