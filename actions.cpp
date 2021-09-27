@@ -24,6 +24,7 @@ int makeSelection(const std::vector<std::string> &options, int indent = 0)
 		std::cout << indent <<  i << ". " << options[i] << std::endl;
 	}
 	int index;
-	while(!readInt(std::cin, index))
+	//Read an integer from the user, in the range 0-number of options
+	while(!readInt(std::cin, index, 0, options.size()))
 		return index;
 }

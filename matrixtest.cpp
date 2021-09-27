@@ -313,6 +313,9 @@ int main(int argc, char *argv[])
 
 				break;
 			case LOAD_MODEL:
+				std::vector<std::string> modelFiles = listFiles("models", ".mm");
+				int modelIndex = makeSelection(modelFiles, 3);
+				network.loadModel(modelFiles[modelIndex]);
 				break;
 			case SETTINGS:
 				break;
